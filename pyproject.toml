@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "streamlit-recipe-bot"
+version = "0.1.0"
+description = ""
+authors = ["Ron Heichman <ronheichman@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.13"
+streamlit = "^1.45.0"
+pydantic = "^2.11.4"
+google = "^3.0.0"
+google-auth-oauthlib = "^1.2.2"
+google-api-python-client = "^2.169.0"
+pydantic-settings = "^2.9.1"
+diskcache = "^5.6.3"
+rapidfuzz = "^3.13.0"
+scipy = "^1.15.2"
+spacy = "^3.8.5"
+
+
+[tool.poetry.group.dev.dependencies]
+deptry = "^0.23.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
