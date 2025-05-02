@@ -19,7 +19,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 from pydantic import (
     BaseModel,
     Field,
@@ -2153,6 +2153,29 @@ def init_profile_db() -> None:
         st.error(UiText.ERROR_PROFILE_DB_INIT.format(error=e))
 
 
+def _upload_file_to_drive(local_path: str, drive_folder_id: str, mime_type: str):
+    service = _get_gdrive_service()
+    if not service: return
+
+    # look for an existing file
+    query = (
+        f"name = '{os.path.basename(local_path)}' "
+        f"and '{drive_folder_id}' in parents "
+        "and trashed = false"
+    )
+    resp = service.files().list(q=query, fields="files(id)").execute()
+    files = resp.get("files", [])
+    media = MediaFileUpload(local_path, mimetype=mime_type, resumable=True)
+
+    if files:
+        file_id = files[0]["id"]
+        service.files().update(fileId=file_id, media_body=media).execute()
+    else:
+        metadata = {"name": os.path.basename(local_path), "parents": [drive_folder_id]}
+        service.files().create(body=metadata, media_body=media, fields="id").execute()
+
+
+
 def save_profile(username: str, options_base64: str) -> str:
     """Saves a profile to the database. Returns the timestamp."""
     timestamp = datetime.now().isoformat(timespec=FormatStrings.TIMESTAMP_ISO_SECONDS)
@@ -2179,6 +2202,8 @@ def save_profile(username: str, options_base64: str) -> str:
             (username, timestamp, options_base64),
         )
         conn.commit()
+        drive_folder = st.secrets["google_drive"]["folder_id"]
+        _upload_file_to_drive(config.full_profile_db_path, drive_folder, "application/x-sqlite3")
         log_with_payload(
             logging.INFO,
             LogMsg.PROFILE_DB_SAVE_SUCCESS,
