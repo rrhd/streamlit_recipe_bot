@@ -18,6 +18,11 @@ diskcache = "^5.6.3"
 rapidfuzz = "^3.13.0"
 scipy = "^1.15.2"
 spacy = "^3.8.5"
+epub2pdf = "^0.1.0"
+img2pdf = "^0.6.1"
+pikepdf = "^9.7.0"
+lxml = "^5.4.0"
+mobi = "^0.3.3"
 
 
 [tool.poetry.group.dev.dependencies]

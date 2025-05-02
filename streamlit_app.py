@@ -49,12 +49,6 @@ class LogMsg(StrEnum):
     CONFIG_INVALID_DEFAULT_MODE = "Invalid default TagFilterMode: {mode}"
     CONFIG_LOAD_FAIL = "CRITICAL: Failed to load AppConfig: {error}"
 
-    EBOOK_CONVERT_FOUND = "ebook-convert found at: {path}"
-    EBOOK_CONVERT_VERSION_SUCCESS = "ebook-convert version check successful: {output}"
-    EBOOK_CONVERT_VERSION_FAIL = (
-        "ebook-convert found but '--version' check failed: {error}"
-    )
-    EBOOK_CONVERT_NOT_FOUND = "ebook-convert command not found in system PATH."
     EBOOK_CONVERT_REQ = "Request to ensure PDF format for: {source_path}"
     EBOOK_CONVERT_SRC_NOT_FOUND = (
         "Source file for PDF conversion not found: {source_path}"
@@ -65,14 +59,14 @@ class LogMsg(StrEnum):
         "Converting '{source_path}' to PDF at '{output_pdf_path}'..."
     )
     EBOOK_CONVERT_SUCCESS = (
-        "ebook-convert completed successfully for {source_path}. Output:\n{output}"
+        "Convert completed successfully for {source_path}. Output:\n{output}"
     )
     EBOOK_CONVERT_OUTPUT_MISSING = (
-        "ebook-convert ran but output file not found: {output_pdf_path}"
+        "Convert ran but output file not found: {output_pdf_path}"
     )
     EBOOK_CONVERT_CMD_NOT_FOUND = "`ebook-convert` command not found. Is Calibre installed and in the system PATH?"
     EBOOK_CONVERT_FAILED = (
-        "ebook-convert failed for {source_path}. Error: {error}\nStderr:\n{stderr}"
+        "Convert failed for {source_path}. Error: {error}\nStderr:\n{stderr}"
     )
     EBOOK_CONVERT_UNEXPECTED_ERROR = (
         "An unexpected error occurred during PDF conversion for {source_path}"
@@ -770,7 +764,7 @@ class UiText(StrEnum):
     ERROR_UNEXPECTED_FETCH_SOURCES = "Unexpected error fetching sources: {error}"
     ERROR_EBOOK_CONVERT_MISSING_RUNTIME = "`ebook-convert` not found. Please install Calibre and ensure it's in the system PATH to view non-PDF books."
     ERROR_EBOOK_CONVERT_FAIL_RUNTIME = (
-        "Failed to convert book '{filename}' to PDF. Error: {stderr}"
+        "The 'epub2pdf' command was not found. Please ensure the 'epub2pdf' Python package is installed correctly."
     )
     ERROR_EBOOK_CONVERT_UNEXPECTED_RUNTIME = (
         "An unexpected error occurred converting book: {error}"
@@ -900,7 +894,8 @@ class HtmlStyle(StrEnum):
 class ToolNames(StrEnum):
     """Executable tool names."""
 
-    EBOOK_CONVERT = "ebook-convert"
+    EBOOK_CONVERT = "epub2pdf"
+    OUTPUT_FLAG = "-o"
 
 
 class MiscValues(StrEnum):
@@ -914,6 +909,7 @@ class MiscValues(StrEnum):
     HTTPS_PREFIX = "https://"
     DEFAULT_NA = "N/A"
     DEFAULT_STEP = "?"
+
 
 
 class LogPayloadKeys(StrEnum):
@@ -1546,49 +1542,6 @@ def log_with_payload(
     logger.log(
         level, message, exc_info=exc_info, extra={"struct_payload": prepared_payload}
     )
-
-
-@st.cache_resource
-def check_ebook_convert_availability() -> bool:
-    """Checks if ebook-convert command is available in the system PATH."""
-    path = shutil.which(ToolNames.EBOOK_CONVERT)
-    if path:
-        log_with_payload(logging.INFO, LogMsg.EBOOK_CONVERT_FOUND, path=path)
-        try:
-            result = subprocess.run(
-                [ToolNames.EBOOK_CONVERT, "--version"],
-                capture_output=True,
-                text=True,
-                check=True,
-                encoding=FormatStrings.ENCODING_UTF8,
-            )
-            output = result.stdout.strip()
-            log_with_payload(
-                logging.INFO, LogMsg.EBOOK_CONVERT_VERSION_SUCCESS, output=output
-            )
-            return True
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            err_payload = ErrorPayload(error_message=str(e))
-            log_with_payload(
-                logging.WARNING,
-                LogMsg.EBOOK_CONVERT_VERSION_FAIL,
-                payload=err_payload,
-                error=str(e),
-            )
-            return False
-        except Exception as e:
-            err_payload = ErrorPayload(error_message=str(e))
-            log_with_payload(
-                logging.ERROR,
-                LogMsg.EBOOK_CONVERT_VERSION_FAIL,
-                payload=err_payload,
-                error=str(e),
-                exc_info=True,
-            )
-            return False
-    else:
-        log_with_payload(logging.ERROR, LogMsg.EBOOK_CONVERT_NOT_FOUND)
-        return False
 
 
 def _get_gdrive_service() -> Any | None:
@@ -2610,8 +2563,9 @@ def download_gdrive_file(
 @st.cache_resource(max_entries=5)
 def to_pdf_cached(source_path: str, temp_dir: str) -> str:
     """
-    Converts an ebook (epub, mobi) to PDF using ebook-convert.
-    Returns the path to the PDF. Requires Calibre's ebook-convert.
+    Converts an ebook (epub, mobi) to PDF using the 'epub2pdf' command-line tool
+    (installed as a Python package dependency via Poetry).
+    Returns the path to the PDF. Requires the 'epub2pdf' Python package.
     Raises exceptions on failure.
     """
     payload = FileOperationPayload(file_path=source_path)
@@ -2674,7 +2628,7 @@ def to_pdf_cached(source_path: str, temp_dir: str) -> str:
 
         with st.spinner(UiText.SPINNER_CONVERTING_PDF.format(filename=source_filename)):
             result = subprocess.run(
-                [ToolNames.EBOOK_CONVERT, source_path, output_pdf_path],
+                [ToolNames.EBOOK_CONVERT, source_path, ToolNames.OUTPUT_FLAG, output_pdf_path],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -2696,7 +2650,7 @@ def to_pdf_cached(source_path: str, temp_dir: str) -> str:
                 output_pdf_path=output_pdf_path,
             )
             raise RuntimeError(
-                f"ebook-convert failed to create output file: {output_pdf_path}"
+                f"epub2pdf failed to create output file: {output_pdf_path}. Stderr: {result.stderr}"
             )
         return output_pdf_path
 
@@ -2720,9 +2674,7 @@ def to_pdf_cached(source_path: str, temp_dir: str) -> str:
             exc_info=True,
         )
         st.error(
-            UiText.ERROR_EBOOK_CONVERT_FAIL_RUNTIME.format(
-                filename=pathlib.Path(source_path).name, stderr=stderr
-            )
+            UiText.ERROR_EBOOK_CONVERT_FAIL_RUNTIME
         )
         raise
     except Exception as e:
@@ -4106,9 +4058,6 @@ elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_LIBRARY:
         st.session_state["_prepared_pdf"] = pdf
 
     st.header(UiText.HEADER_LIBRARY)
-    ebook_convert_available = check_ebook_convert_availability()
-    if not ebook_convert_available:
-        st.warning(UiText.WARN_EBOOK_CONVERT_MISSING)
 
     def refresh_book_list():
         log_with_payload(logging.INFO, LogMsg.LIBRARY_REFRESH_CLICKED)
