@@ -1548,7 +1548,7 @@ def log_with_payload(
     )
 
 
-@st.cache_data
+@st.cache_resource
 def check_ebook_convert_availability() -> bool:
     """Checks if ebook-convert command is available in the system PATH."""
     path = shutil.which(ToolNames.EBOOK_CONVERT)
@@ -2333,7 +2333,7 @@ def load_profile(username: str) -> dict[str, Any] | None:
 init_profile_db()
 
 
-@st.cache_data(ttl=600)
+@st.cache_resource(ttl=600)
 def fetch_sources_cached(db_last_updated_time_key: str | None) -> list[str]:
     """
     Cached function to fetch distinct source domains from the recipe database.
@@ -2397,7 +2397,7 @@ def fetch_sources_cached(db_last_updated_time_key: str | None) -> list[str]:
             conn.close()
 
 
-@st.cache_data(ttl=600)
+@st.cache_resource(ttl=600)
 def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
     """Lists cookbook files from Google Drive, returning labels and a mapping to file ID and name."""
     func_name = "list_drive_books_cached"
@@ -2607,7 +2607,7 @@ def download_gdrive_file(
         return None
 
 
-@st.cache_data(max_entries=5)
+@st.cache_resource(max_entries=5)
 def to_pdf_cached(source_path: str, temp_dir: str) -> str:
     """
     Converts an ebook (epub, mobi) to PDF using ebook-convert.
