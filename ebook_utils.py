@@ -81,7 +81,6 @@ def to_pdf_cached(source_path: str, temp_dir: str) -> str:
                 [
                     ToolNames.EBOOK_CONVERT,
                     source_path,
-                    ToolNames.OUTPUT_FLAG,
                     output_pdf_path,
                 ],
                 check=True,

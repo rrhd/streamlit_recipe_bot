@@ -241,7 +241,6 @@ class ToolNames(StrEnum):
     """Executable tool names."""
 
     EBOOK_CONVERT = "ebook-convert"
-    OUTPUT_FLAG = "-o"
 
 
 class LogMsg(StrEnum):
