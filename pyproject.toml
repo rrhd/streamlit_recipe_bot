@@ -23,6 +23,8 @@ img2pdf = "^0.6.1"
 pikepdf = "^9.7.0"
 lxml = "^5.4.0"
 mobi = "^0.3.3"
+opencv-python = "^4.11.0.86"
+mistralai = "^1.7.0"
 
 
 [tool.poetry.group.dev.dependencies]
