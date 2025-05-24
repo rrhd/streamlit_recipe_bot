@@ -12,6 +12,11 @@ from log_utils import ErrorPayload, log_with_payload
 class UiText(StrEnum):
     """Static UI text elements like labels, titles, messages."""
 
+    WARNING_NO_INGREDIENTS_FROM_IMAGE = "No ingredients found."
+    SUCCESS_INGREDIENTS_FROM_IMAGE = "✓ {count} Ingredients added"
+    SPINNER_PROCESSING_IMAGE = "Detecting ingredients…"
+    LABEL_FILE_INPUT = "…or upload an image"
+    LABEL_CAMERA_INPUT = "Take a picture"
     PREPARING_BOOK = "Preparing '{label}'…"
     SPINNER_LOADING_PDF = "Loading PDF..."
     BUTTON_OPEN_BOOK_PDF = "Open Book PDF"

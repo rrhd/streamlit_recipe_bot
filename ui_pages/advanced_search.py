@@ -18,6 +18,7 @@ from constants import (
     LogMsg,
 )
 from db_utils import save_profile, load_profile, fetch_sources_cached
+from image_parser import parse_image_bytes
 from log_utils import SearchPayload, ProfilePayload, ErrorPayload, log_with_payload
 from query_top_k import query_top_k
 from session_state import SessionStateKeys
@@ -639,6 +640,25 @@ def render_advanced_search_page(
     defaults = config.defaults
     with search_col:
         st.subheader(UiText.SUBHEADER_INPUTS_FILTERS)
+
+        cam_file = st.camera_input(UiText.LABEL_CAMERA_INPUT)
+        up_file  = st.file_uploader(
+            UiText.LABEL_FILE_INPUT,
+            type=["jpg", "jpeg", "png"],
+            accept_multiple_files=False,
+        )
+        img_file = cam_file or up_file
+        if img_file:
+            with st.spinner(UiText.SPINNER_PROCESSING_IMAGE):
+                ings = parse_image_bytes(img_file.getvalue())
+            if ings:
+                existing = st.session_state.get(SessionStateKeys.ADV_INGREDIENTS_INPUT, "")
+                joined = "\n".join(filter(None, [existing.strip(), *ings]))
+                st.session_state[SessionStateKeys.LOADED_INGREDIENTS_TEXT] = joined
+                st.session_state[SessionStateKeys.ADV_INGREDIENTS_INPUT] = joined
+                st.success(UiText.SUCCESS_INGREDIENTS_FROM_IMAGE.format(count=len(ings)))
+            else:
+                st.warning(UiText.WARNING_NO_INGREDIENTS_FROM_IMAGE)
 
         st.text_area(
             UiText.LABEL_INGREDIENTS,

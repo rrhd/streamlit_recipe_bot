@@ -1,6 +1,7 @@
 import os
+from pathlib import Path
 from typing import Self
-
+import streamlit as st
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,7 +11,7 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg,
+    LogMsg, ModelName, Suffix,
 )
 
 
@@ -43,7 +44,14 @@ class LogConfig(BaseModel):
 
 class AppConfig(BaseSettings):
     """Application configuration settings."""
-
+    api_key: str | None = Field(
+        default=None,
+    )
+    model: ModelName = ModelName.VISION
+    prompt_path: Path | None = Field(default=None)
+    cache_dir: Path | None = Field(default=None)
+    max_log_length: int = 200
+    truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(
         env_file=".env", env_nested_delimiter="__", extra="ignore"
     )
@@ -255,4 +263,4 @@ class AppConfig(BaseSettings):
         return self
 
 
-CONFIG = AppConfig()
+CONFIG = AppConfig(**st.secrets)

@@ -1,5 +1,6 @@
+import os
 import tempfile
-from enum import StrEnum
+from enum import StrEnum, IntEnum
 
 
 class FileExt(StrEnum):
@@ -239,7 +240,7 @@ class ProfileDataKeys(StrEnum):
 class ToolNames(StrEnum):
     """Executable tool names."""
 
-    EBOOK_CONVERT = "epub2pdf"
+    EBOOK_CONVERT = "ebook-convert"
     OUTPUT_FLAG = "-o"
 
 
@@ -495,3 +496,30 @@ class LogMsg(StrEnum):
 
     LOG_FORMATTING_ERROR = "Log formatting error for template '{template}'. Missing key: {key}. Raw kwargs: {kwargs}"
     LOG_MISSING_FORMAT_KEY = "Missing key '{key}' in kwargs for log message: {template}"
+
+
+class Role(StrEnum):
+    SYSTEM = "system"
+    USER = "user"
+
+
+class ContentType(StrEnum):
+    TEXT = "text"
+    IMAGE_URL = "image_url"
+
+
+class UserPrompt(StrEnum):
+    PROCESS = "Process images"
+
+
+class ModelName(StrEnum):
+    VISION = "mistral-small-2503"
+
+
+class CacheLimit(IntEnum):
+    MAX_TOKENS = 4096
+    MAX_IMAGES = 8
+
+
+class Suffix(StrEnum):
+    ELLIPSIS = "…"
