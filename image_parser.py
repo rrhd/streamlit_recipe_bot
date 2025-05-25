@@ -14,4 +14,4 @@ def parse_image_bytes(data: bytes) -> list[str]:
     """Return ingredient lines from one image (blocking)."""
     b64 = "data:image/jpeg;base64," + base64.b64encode(data).decode()
     result = _api.parse_images(_prompt, [b64])[0]
-    return result.ingredients or []
+    return list(map(lambda x: x.lower(), result.ingredients)) or []
