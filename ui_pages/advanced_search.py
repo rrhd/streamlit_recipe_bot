@@ -624,6 +624,62 @@ def render_advanced_search_page(
             logging.INFO, LogMsg.SOURCES_SET_ALL, source_count=len(valid_sources)
         )
 
+    def reset_fields_action():
+        """Reset advanced search inputs to defaults."""
+        log_with_payload(logging.INFO, LogMsg.ADV_SEARCH_RESET_CLICKED)
+        defaults = config.defaults
+
+        st.session_state[SessionStateKeys.LOADED_INGREDIENTS_TEXT] = defaults.ingredients_text
+        st.session_state[SessionStateKeys.ADV_INGREDIENTS_INPUT] = defaults.ingredients_text
+        st.session_state[SessionStateKeys.LOADED_MUST_USE_TEXT] = defaults.must_use_text
+        st.session_state[SessionStateKeys.ADV_MUST_USE_INPUT] = defaults.must_use_text
+        st.session_state[SessionStateKeys.LOADED_EXCLUDED_TEXT] = defaults.excluded_text
+        st.session_state[SessionStateKeys.ADV_EXCLUDED_INPUT] = defaults.excluded_text
+        st.session_state[SessionStateKeys.LOADED_KEYWORDS_INCLUDE] = defaults.keywords_include
+        st.session_state[SessionStateKeys.ADV_KEYWORDS_INCLUDE_INPUT] = defaults.keywords_include
+        st.session_state[SessionStateKeys.LOADED_KEYWORDS_EXCLUDE] = defaults.keywords_exclude
+        st.session_state[SessionStateKeys.ADV_KEYWORDS_EXCLUDE_INPUT] = defaults.keywords_exclude
+        st.session_state[SessionStateKeys.LOADED_MIN_ING_MATCHES] = defaults.min_ing_matches
+        st.session_state[SessionStateKeys.ADV_MIN_ING_MATCHES_INPUT] = defaults.min_ing_matches
+        st.session_state[SessionStateKeys.LOADED_MAX_STEPS] = defaults.max_steps
+        st.session_state[SessionStateKeys.ADV_MAX_STEPS_INPUT] = defaults.max_steps
+        st.session_state[SessionStateKeys.LOADED_TAG_FILTER_MODE] = default_tag_filter_mode_enum
+        st.session_state[SessionStateKeys.ADV_TAG_FILTER_MODE_INPUT] = default_tag_filter_mode_enum
+        st.session_state[SessionStateKeys.LOADED_USER_COVERAGE] = defaults.user_coverage * 100.0
+        st.session_state[SessionStateKeys.ADV_USER_COVERAGE_SLIDER] = defaults.user_coverage * 100.0
+        st.session_state[SessionStateKeys.LOADED_RECIPE_COVERAGE] = defaults.recipe_coverage * 100.0
+        st.session_state[SessionStateKeys.ADV_RECIPE_COVERAGE_SLIDER] = defaults.recipe_coverage * 100.0
+
+        for loaded_key, widget_key in [
+            (SessionStateKeys.LOADED_COURSE_FILTER, SessionStateKeys.ADV_COURSE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_MAIN_ING_FILTER, SessionStateKeys.ADV_MAIN_ING_FILTER_INPUT),
+            (SessionStateKeys.LOADED_DISH_TYPE_FILTER, SessionStateKeys.ADV_DISH_TYPE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_RECIPE_TYPE_FILTER, SessionStateKeys.ADV_RECIPE_TYPE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_CUISINE_FILTER, SessionStateKeys.ADV_CUISINE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_EXCLUDE_COURSE_FILTER, SessionStateKeys.ADV_EXCLUDE_COURSE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_EXCLUDE_MAIN_ING_FILTER, SessionStateKeys.ADV_EXCLUDE_MAIN_ING_FILTER_INPUT),
+            (SessionStateKeys.LOADED_EXCLUDE_DISH_TYPE_FILTER, SessionStateKeys.ADV_EXCLUDE_DISH_TYPE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_EXCLUDE_RECIPE_TYPE_FILTER, SessionStateKeys.ADV_EXCLUDE_RECIPE_TYPE_FILTER_INPUT),
+            (SessionStateKeys.LOADED_EXCLUDE_CUISINE_FILTER, SessionStateKeys.ADV_EXCLUDE_CUISINE_FILTER_INPUT),
+        ]:
+            st.session_state[loaded_key] = []
+            st.session_state[widget_key] = []
+
+        all_sources_list = [
+            s
+            for s in st.session_state.get(SessionStateKeys.ALL_SOURCES_LIST, [])
+            if s != UiText.ERROR_SOURCES_DISPLAY
+        ]
+        st.session_state[SessionStateKeys.LOADED_SOURCES] = all_sources_list
+        st.session_state[SessionStateKeys.ADV_SOURCE_SELECTOR] = all_sources_list
+
+        st.session_state[SessionStateKeys.ADVANCED_SEARCH_RESULTS_HTML] = defaults.profile_message
+        st.session_state[SessionStateKeys.ADVANCED_SEARCH_MAPPING] = {}
+        st.session_state[SessionStateKeys.ADVANCED_SELECTED_RECIPE_LABEL] = None
+        st.session_state[SessionStateKeys.ADVANCED_SEARCH_RESULTS_DF] = None
+
+        st.success(UiText.SUCCESS_FIELDS_RESET)
+
     def update_selected_recipe():
         """Callback function for the recipe selector dropdown."""
 
@@ -904,12 +960,20 @@ def render_advanced_search_page(
                 unsafe_allow_html=True,
             )
 
-        st.button(
-            UiText.BUTTON_SEARCH_RECIPES,
-            on_click=run_advanced_search,
-            type="primary",
-            use_container_width=True,
-        )
+        search_col_btn, reset_col_btn = st.columns(2)
+        with search_col_btn:
+            st.button(
+                UiText.BUTTON_SEARCH_RECIPES,
+                on_click=run_advanced_search,
+                type="primary",
+                use_container_width=True,
+            )
+        with reset_col_btn:
+            st.button(
+                UiText.BUTTON_RESET_FIELDS,
+                on_click=reset_fields_action,
+                use_container_width=True,
+            )
     with results_col:
         st.subheader(UiText.SUBHEADER_RESULTS)
 
