@@ -25,8 +25,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
 
     if SessionStateKeys.CHAT_HISTORY not in st.session_state:
         st.session_state[SessionStateKeys.CHAT_HISTORY] = [
-            SystemMessage(content=AgentText.CHATBOT_SYSTEM),
-            AssistantMessage(content=UiText.CHAT_INIT_MESSAGE),
+            SystemMessage(content=AgentText.CHATBOT_SYSTEM)
         ]
 
     chat_history: list = st.session_state[SessionStateKeys.CHAT_HISTORY]
@@ -35,6 +34,11 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
         if isinstance(msg, SystemMessage):
             continue
         st.chat_message(msg.role).markdown(msg.content)
+
+    if len(chat_history) == 1:
+        init_msg = AssistantMessage(content=UiText.CHAT_INIT_MESSAGE)
+        chat_history.append(init_msg)
+        st.chat_message(init_msg.role).markdown(init_msg.content)
 
     uploaded_files = st.file_uploader(
         UiText.CHAT_FILE_LABEL,

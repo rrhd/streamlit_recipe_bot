@@ -52,3 +52,37 @@ def embeddings_create(cfg: AppConfig, *, inputs: Iterable[str], model: ModelName
     except Exception:
         pass
     return resp
+
+
+def chat_parse(
+    cfg: AppConfig,
+    *,
+    messages: list,
+    model: ModelName,
+    response_format: type,
+    **kwargs: Any,
+) -> Any:
+    """Cached wrapper around Mistral.chat.parse."""
+    client = get_client(cfg.api_key)
+    key = _cache_key(
+        "parse",
+        {
+            "model": model,
+            "messages": [getattr(m, "model_dump", lambda: m)() for m in messages],
+            "schema": response_format.__name__,
+            **kwargs,
+        },
+    )
+    if cached := _cache.get(key):
+        return cached
+    resp = client.chat.parse(
+        model=model,
+        messages=messages,
+        response_format=response_format,
+        **kwargs,
+    )
+    try:
+        _cache.set(key, resp)
+    except Exception:
+        pass
+    return resp

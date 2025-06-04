@@ -1,25 +1,18 @@
 import logging
-
 from typing import Any
 
 import numpy as np
 from mistralai.models import SystemMessage, UserMessage
+from mistralai.models.toolchoice import ToolChoice
 from pydantic import BaseModel
 
 from config import AppConfig
-from constants import ModelName, ToolText, ToolCall, AgentText, SearchLimit, TagFilterMode
-from models import RecipeSearchArgs, RecipeRankArgs
+from constants import ModelName, ToolText, ToolCall, AgentText, SearchLimit
+from models import QueryRequest, RecipeSearchArgs, RecipeRankArgs
 from mistralai.models.function import Function
 from mistralai.models.tool import Tool
 from query_top_k import query_top_k
-from mistral_utils import embeddings_create, chat_complete
-
-
-class ToolChoice(BaseModel):
-    """Model for specifying a single tool choice."""
-
-    type: str = "function"
-    function: dict[str, str]
+from mistral_utils import embeddings_create, chat_complete, chat_parse
 
 
 RESULT_LIMIT = SearchLimit.RESULTS
@@ -45,23 +38,31 @@ RANK_TOOL = Tool(
 )
 
 
+def _parse_query(query: str, cfg: AppConfig, sources: list[str]) -> QueryRequest:
+    messages = [
+        SystemMessage(content=AgentText.PARSE_SYSTEM),
+        UserMessage(content=AgentText.PARSE_USER.format(query=query)),
+    ]
+    try:
+        resp = chat_parse(
+            cfg,
+            messages=messages,
+            model=ModelName.CHAT_SMALL,
+            response_format=QueryRequest,
+        )
+        args: QueryRequest = resp.choices[0].message.parsed
+    except Exception as e:
+        logging.error("Query parsing failed: %s", e)
+        args = QueryRequest(keywords_to_include=query.split())
+    if not args.sources:
+        args.sources = sources
+    return args
+
+
 def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list[dict[str, Any]]:
-    """Search recipes using query_top_k and rerank with embeddings and LLM."""
-    results = query_top_k(
-        user_ingredients=[],
-        tag_filters={},
-        excluded_tags={},
-        min_ing_matches=0,
-        forbidden_ingredients=[],
-        must_use=[],
-        tag_filter_mode=TagFilterMode.AND,
-        max_steps=0,
-        user_coverage_req=0.0,
-        recipe_coverage_req=0.0,
-        keywords_to_include=query.split(),
-        keywords_to_exclude=[],
-        sources=sources,
-    )
+    """Parse the query, execute search, then rerank results."""
+    params = _parse_query(query, config, sources)
+    results = query_top_k(**params.model_dump())
 
     if not results:
         return []

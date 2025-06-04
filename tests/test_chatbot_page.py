@@ -17,6 +17,7 @@ sys.modules['query_top_k'] = dummy
 from config import AppConfig
 from session_state import SessionStateKeys
 from ui_pages.chatbot import render_chatbot_page
+import chat_agent
 
 
 class FakeExpander:
@@ -103,6 +104,12 @@ def test_render_chatbot_page_flow(monkeypatch):
     fake_chat_complete.calls = 0
 
     monkeypatch.setattr("ui_pages.chatbot.chat_complete", fake_chat_complete)
+    monkeypatch.setattr(
+        "chat_agent.chat_parse",
+        lambda *a, **k: SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(parsed=chat_agent.QueryRequest()))]
+        ),
+    )
     monkeypatch.setattr(
         "ui_pages.chatbot.search_and_rerank",
         lambda q, cfg, sources: [{"title": "R1", "url": "url1"}],

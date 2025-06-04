@@ -529,6 +529,11 @@ class ToolText(StrEnum):
     ORDER_PARAM = "New ordering of recipe numbers"
 
 
+    PARSE_SYSTEM = (
+        "Interpret the user's request and return recipe search parameters as JSON."
+    )
+    PARSE_USER = "Request: {query}"
+
 class ToolCall(StrEnum):
     SEARCH_RECIPES = "search_recipes"
     RANK_RECIPES = "rank_recipes"

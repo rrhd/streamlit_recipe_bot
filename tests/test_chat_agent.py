@@ -7,7 +7,7 @@ import streamlit as st
 st.secrets._secrets = {}
 
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 dummy = ModuleType('query_top_k')
 dummy.query_top_k = lambda **kwargs: []
@@ -52,6 +52,13 @@ def test_search_and_rerank_uses_llm_order(monkeypatch):
     monkeypatch.setattr(
         "chat_agent.query_top_k",
         lambda **kwargs: sample_results,
+    )
+
+    monkeypatch.setattr(
+        "chat_agent.chat_parse",
+        lambda *a, **k: SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(parsed=chat_agent.QueryRequest()))]
+        ),
     )
 
     def fake_embeddings_create(*args, **kwargs):
