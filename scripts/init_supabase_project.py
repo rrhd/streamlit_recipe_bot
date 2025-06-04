@@ -22,12 +22,12 @@ class ApiEndpoint(StrEnum):
 
 
 class SecretDefaults(StrEnum):
-    DOWNLOAD_DEST_DIR = "/absolute/path/for/cache_and_databases"
-    BOOK_DIR_RELATIVE = "books"
-    PROFILE_DB_PATH = "database/profiles.db"
-    RECIPE_DB_FILENAME = "recipes.db"
+    DOWNLOAD_DEST_DIR = "data"
+    BOOK_DIR_RELATIVE = "data/books"
+    PROFILE_DB_PATH = "data/profiles_db.sqlite"
+    RECIPE_DB_FILENAME = "data/recipe_links.db"
     SECRETS_PATH = ".streamlit/secrets.toml"
-    PROJECT_NAME = "recipe-bot"
+    PROJECT_NAME = "streamlit_recipe_bot"
     REGION = "us-east-1"
     DB_PASSWORD = "postgres"
 
@@ -56,7 +56,7 @@ class ProjectInfo(BaseModel):
 
 
 def _headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}", "apikey": token, "Content-Type": "application/json"}
+    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 
 def _get_org_id(cfg: SetupConfig) -> str:
@@ -121,14 +121,28 @@ def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     cfg = SetupConfig()
+
+    if not cfg.access_token and cfg.secrets_path.exists():
+        try:
+            cfg.access_token = toml.loads(cfg.secrets_path.read_text()).get(
+                "supabase_access_token", ""
+            )
+        except Exception as err:
+            logging.warning("Could not read secrets.toml: %s", err)
+
+    if not cfg.access_token:
+        raise RuntimeError(
+            "Personal access token missing. "
+            "Set SUPABASE_ACCESS_TOKEN or add 'supabase_access_token' in secrets.toml."
+        )
     org_id = _get_org_id(cfg)
     logging.info("Using organization %s", org_id)
     proj = _create_project(cfg, org_id)
     ref = proj["ref"]
     logging.info("Created project %s", ref)
 
-    # Wait until project is ready
-    for _ in range(20):
+    # Wait until project is ready (~10 min max)
+    for _ in range(40):
         details = _get_project_details(cfg, ref)
         if details.get("status") == "ACTIVE":
             break
@@ -137,7 +151,7 @@ def main() -> None:
         raise RuntimeError("Project did not become active")
 
     key = _get_service_role_key(cfg, ref)
-    db_url = details["databaseConnectionString"]
+    db_url = _get_project_details(cfg, ref)["db_url"]
     info = ProjectInfo(
         supabase_url=f"https://{ref}.supabase.co",
         supabase_api_key=key,

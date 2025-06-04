@@ -30,5 +30,6 @@ Scripts in the `scripts/` directory help initialize and migrate the profile data
 
 The configuration loader checks environment variables if the matching
 entries are not present in `st.secrets`. For Supabase you can set
-`SUPABASE_URL`, `SUPABASE_API_KEY` and `SUPABASE_DB_URL` to run the
-scripts without a secrets file.
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_API_KEY`, and
+`SUPABASE_DB_URL` to run the scripts without a secrets file. The
+`supabase_access_token` value may also be placed in `.streamlit/secrets.toml`.
