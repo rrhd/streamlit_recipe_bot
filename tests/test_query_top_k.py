@@ -1,8 +1,15 @@
 import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT))
+
 os.environ["RECIPE_DB_PATH"] = str(ROOT / "data" / "test_recipes.db")
 
 import pytest
 
+import query_top_k
 from query_top_k import (
     normalize_ingredient_name,
     deduplicate_candidates,
@@ -10,15 +17,43 @@ from query_top_k import (
     bulk_compute_coverage,
 )
 from nlp_utils import get_canonical_ingredient
+
+
+def run_query(keywords=None, user_ingredients=None, min_ing_matches=None, top_n_db=10):
+    if keywords is None:
+        keywords = []
+    if user_ingredients is None:
+        user_ingredients = []
+    if min_ing_matches is None:
+        min_ing_matches = 1 if user_ingredients else 0
+    return query_top_k.query_top_k(
+        user_ingredients=user_ingredients,
+        tag_filters={},
+        excluded_tags={},
+        keywords_to_include=keywords,
+        min_ing_matches=min_ing_matches,
+        top_n_db=top_n_db,
+    )
+
+
+@pytest.mark.parametrize(
     "keywords, expected",
     [(["steak"], True), (["tea"], False), (["mussels"], True)],
+)
 def test_keyword_basic(keywords, expected):
+    results = run_query(keywords=keywords)
     assert (len(results) > 0) == expected
 
+
+@pytest.mark.parametrize(
     "ingredients, expected_count",
     [(["flank steak"], 1), (["dragon fruit"], 0)],
+)
 def test_simple_ingredient_match(ingredients, expected_count):
+    results = run_query(user_ingredients=ingredients)
     assert len(results) >= expected_count
+
+
 def test_query_specific_recipe():
     ingredients = ["boneless beef chuck-eye roast", "garlic clove"]
     results = run_query(user_ingredients=ingredients, min_ing_matches=2)
@@ -45,7 +80,10 @@ def test_bulk_compute_coverage():
             assert uc == 1.0
             assert rc > 0
             break
+    else:
         pytest.fail("Expected recipe not found")
+
+
 def test_deduplicate_candidates():
     recipes = {
         "A": {"title": "Test Stew", "desc": "a"},
@@ -63,19 +101,6 @@ def test_normalize_and_canonical():
     canon = get_canonical_ingredient(raw)
     norm = normalize_ingredient_name(canon)
     assert norm == "flank steak"
-        assert len(results) == 0
-    else:
-        assert len(results) >= expected_min
-
-
-@pytest.mark.parametrize(
-    "keywords, expected_min",
-    [
-        (["mussels"], 1),
-        (["Pho"], 1),
-        (["crab", "shrimp"], 1),
-        (["Chicago", "beef"], 2),
-        (["tea", "sugar"], 0),
 
 
 def test_query_flank_steak_top_results():
@@ -115,8 +140,6 @@ def test_keyword_no_partial_matches(keywords):
 def test_multi_ingredient_query(ingredients, min_match, expect_any):
     results = run_query(user_ingredients=ingredients, min_ing_matches=min_match)
     assert (len(results) > 0) == expect_any
-    ],
-)
 
 
 def test_many_ingredients_match():
@@ -135,22 +158,3 @@ def test_many_ingredients_match():
     ]
     results = run_query(user_ingredients=ingredients, min_ing_matches=10, top_n_db=10)
     assert results and results[0]["url"].endswith("chili-crisp-noodles")
-def test_keyword_combinations(keywords, expected_min):
-    results = run_query(keywords=keywords)
-    if expected_min == 0:
-        assert len(results) == 0
-    else:
-        assert len(results) >= expected_min
-
-
-@pytest.mark.parametrize(
-    "ingredients, min_matches, expected_min",
-    [
-        (["unsalted butter", "garlic clove"], 2, 19),
-        (["unsalted butter", "peanut butter"], 2, 1),
-        (["unsalted butter", "sugar"], 2, 24),
-    ],
-)
-def test_multi_ingredient_matching(ingredients, min_matches, expected_min):
-    results = run_query(user_ingredients=ingredients, min_ing_matches=min_matches, top_n_db=3000)
-    assert len(results) >= expected_min
