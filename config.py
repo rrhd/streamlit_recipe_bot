@@ -275,7 +275,6 @@ class AppConfig(BaseSettings):
 
 _env_lower = {k.lower(): v for k, v in os.environ.items()}
 try:
-    _secrets = dict(st.secrets)
+    CONFIG = AppConfig(**dict(st.secrets), **_env_lower)
 except Exception:
-    _secrets = {}
-CONFIG = AppConfig(**_secrets, **_env_lower)
+    CONFIG = AppConfig(**_env_lower)
