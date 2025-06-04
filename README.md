@@ -5,3 +5,25 @@ This app provides advanced and simple search tools for finding recipes and a coo
 ## Reset Fields Feature
 
 The Advanced Search page now includes a **Reset Fields** button to quickly restore all search inputs to their default values.
+
+## Supabase Setup
+
+Scripts in the `scripts/` directory help initialize and migrate the profile database to Supabase.
+
+1. Create a project and write credentials:
+
+   ```bash
+   SUPABASE_ACCESS_TOKEN=<token> python scripts/init_supabase_project.py
+   ```
+
+2. Upload existing profiles to the new instance:
+
+   ```bash
+   PYTHONPATH=. python scripts/setup_supabase.py
+   ```
+
+3. Verify the connection:
+
+   ```bash
+   PYTHONPATH=. python scripts/check_supabase.py
+   ```

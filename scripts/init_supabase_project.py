@@ -7,10 +7,12 @@ import requests
 import toml
 from pydantic import BaseModel, Field
 
+from enum import StrEnum
+
 from constants import SupabaseEnv
 
 
-class ApiEndpoint(str):
+class ApiEndpoint(StrEnum):
     BASE = "https://api.supabase.com"
     ORGS = "/v1/organizations"
     PROJECTS = "/v1/projects"
@@ -18,7 +20,7 @@ class ApiEndpoint(str):
     API_KEYS = "/v1/projects/{ref}/api-keys"
 
 
-class SecretDefaults(str):
+class SecretDefaults(StrEnum):
     DOWNLOAD_DEST_DIR = "/absolute/path/for/cache_and_databases"
     BOOK_DIR_RELATIVE = "books"
     PROFILE_DB_PATH = "database/profiles.db"
