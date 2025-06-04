@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from constants import MiscValues
+
 import diskcache
 from models import QueryRequest, SimpleSearchRequest
 from query_top_k import get_db_connection as get_recipe_db_connection
