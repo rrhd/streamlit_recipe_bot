@@ -76,6 +76,23 @@ def test_normalize_and_canonical():
         (["crab", "shrimp"], 1),
         (["Chicago", "beef"], 2),
         (["tea", "sugar"], 0),
+
+
+def test_query_flank_steak_top_results():
+    expected_urls = [
+        "https://www.americastestkitchen.com/recipes/4809-charcoal-grilled-stuffed-flank-steak",
+        "https://www.americastestkitchen.com/recipes/9192-cast-iron-pan-seared-flank-steak-with-crispy-potatoes-and-chimichurri",
+        "https://www.americastestkitchen.com/recipes/16181-ancho-rubbed-flank-steak-and-cilantro-rice-with-avocado-sauce",
+    ]
+    results = run_query(user_ingredients=["flank steak"], min_ing_matches=1, top_n_db=10)
+    urls = [r["url"] for r in results[:3]]
+    assert urls == expected_urls
+
+
+def test_query_italian_beef_result():
+    ingredients = ["boneless beef chuck-eye roast", "garlic clove"]
+    results = run_query(user_ingredients=ingredients, min_ing_matches=2, top_n_db=5)
+    assert results and results[0]["url"].endswith("chicago-italian-beef-sandwiches")
     ],
 )
 def test_keyword_combinations(keywords, expected_min):
