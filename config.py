@@ -270,4 +270,5 @@ class AppConfig(BaseSettings):
         return self
 
 
-CONFIG = AppConfig(**st.secrets)
+_env_lower = {k.lower(): v for k, v in os.environ.items()}
+CONFIG = AppConfig(**st.secrets, **_env_lower)
