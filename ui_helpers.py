@@ -12,8 +12,16 @@ from log_utils import ErrorPayload, log_with_payload
 class UiText(StrEnum):
     """Static UI text elements like labels, titles, messages."""
 
+    EXPANDER_SEARCH_RESULTS = "Search Results"
+    CHAT_ABOUT = (
+        "Use the Chatbot tab to have a natural conversation about what you want to cook."
+        " You can describe a craving, list ingredients, or upload pictures, and the bot"
+        " will find suitable recipes."
+    )
+    CHAT_FILE_LABEL = "Upload images"
     WARNING_NO_INGREDIENTS_FROM_IMAGE = "No ingredients found."
     SUCCESS_INGREDIENTS_FROM_IMAGE = "✓ {count} Ingredients added"
+    SUCCESS_FIELDS_RESET = "✓ Fields reset to defaults"
     SPINNER_PROCESSING_IMAGE = "Detecting ingredients…"
     LABEL_FILE_INPUT = "…or upload an image"
     LABEL_CAMERA_INPUT = "Take a picture"
@@ -153,37 +161,24 @@ class UiText(StrEnum):
     LABEL_SIMPLE_QUERY = "Search Query (Keywords for Title/Description)"
     PLACEHOLDER_SIMPLE_QUERY = "e.g. easy chicken stir fry"
     BUTTON_SIMPLE_SEARCH = "Simple Search"
-from mistralai import Mistral, UserMessage
-from mistralai.models import ImageURLChunk, TextChunk
+    MARKDOWN_SIMPLE_RESULTS = "### Simple Search Results"
+    WARN_EMPTY_QUERY = "Please enter a search query."
+    MSG_SIMPLE_QUERY_PROMPT = "<p>Enter a query above.</p>"
+    MSG_SIMPLE_NO_RESULTS = "<p>No results found for query: '{query_text}'</p>"
+    ERROR_DURING_SIMPLE_SEARCH = (
+        "<p style='color:red;'>Error during simple search: {error}</p>"
+    )
 
-client = Mistral(api_key="YOUR_KEY")
-messages = [
-    UserMessage(content=[
-        ImageURLChunk(image_url={"url": "https://example.com/img.jpg"}),
-        TextChunk(text="What's shown here?")
-    ])
-]
-resp = client.chat.complete(model="mistral-large-latest", messages=messages)
-    """
-    EXAMPLE_EMBEDDINGS = """\
-from mistralai import Mistral
-
-client = Mistral(api_key="YOUR_KEY")
-emb = client.embeddings.create(model="mistral-embed", inputs=["hello world"])
-    """
-    EXAMPLE_STREAMING = """\
-from mistralai import Mistral, UserMessage
-
-client = Mistral(api_key="YOUR_KEY")
-for chunk in client.chat.stream(
-    model="mistral-large-latest", messages=[UserMessage(content="Hello")]
-):
-    print(chunk.data.choices[0].delta.content, end="")
-    """
-    TOOL_ARGS_INVALID = "I couldn't understand that search request."
-    EXPANDER_SEARCH_RESULTS = "Search Results"
-    COLUMN_RECIPE_TITLE = "Recipe Title"
-    COLUMN_SOURCE_URL = "Source / URL"
+    HEADER_LIBRARY = "Cookbook Library"
+    WARN_EBOOK_CONVERT_MISSING = (
+        "**`ebook-convert` (from Calibre) was not found.** "
+        "Non-PDF books cannot be converted. Please install Calibre and ensure "
+        "it's in your system PATH, or add `calibre` to `.streamlit/packages.txt` "
+        "if deploying to Streamlit Community Cloud."
+    )
+    WARN_NO_BOOKS_FOUND = "No books found in the configured Google Drive folder."
+    SELECTBOX_LABEL_BOOK = "Choose a book"
+    BUTTON_REFRESH_BOOKS = "Refresh Book List"
     ERROR_BOOK_DETAILS_NOT_FOUND = "Details not found for selected book: {label}"
     ERROR_BOOK_MISSING_DETAILS = (
         "Missing critical book details (ID, name, or local path)."
@@ -255,6 +250,9 @@ for chunk in client.chat.stream(
     SPINNER_PREPARING_BOOK = "Preparing '{label}'..."
     SPINNER_PROCESSING_BOOK = "Processing '{filename}'... Please wait."
     SPINNER_CONVERTING_PDF = "Converting {filename} to PDF..."
+    HEADER_CHAT = "Chatbot Search"
+    CHAT_PLACEHOLDER = "Ask me for recipe ideas..."
+    CHAT_INIT_MESSAGE = "Hello! Tell me what recipes you're interested in, or ask for ideas based on ingredients you have. I can also help with specific recipe searches."
 
 
 class HtmlStyle(StrEnum):

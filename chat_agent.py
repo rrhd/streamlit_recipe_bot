@@ -47,7 +47,7 @@ def _parse_query(query: str, cfg: AppConfig, sources: list[str]) -> QueryRequest
         resp = chat_parse(
             cfg,
             messages=messages,
-            model=ModelName.CHAT_SMALL,
+            model=ModelName.VISION,
             response_format=QueryRequest,
         )
         args: QueryRequest = resp.choices[0].message.parsed
@@ -92,7 +92,7 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
         resp_rank = chat_complete(
             config,
             messages=messages,
-            model=ModelName.CHAT_SMALL,
+            model=ModelName.VISION,
             tools=[RANK_TOOL],
             tool_choice=ToolChoice(function={"name": ToolCall.RANK_RECIPES}),
             temperature=0.2,

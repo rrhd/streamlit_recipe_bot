@@ -1,11 +1,3 @@
-from types import SimpleNamespace
-import sys
-from pathlib import Path
-import pytest
-
-sys.modules.setdefault("streamlit", SimpleNamespace(secrets={}))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 import image_parser
 from process_images import OutputModel
 

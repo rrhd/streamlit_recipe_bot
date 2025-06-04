@@ -512,44 +512,31 @@ class ContentType(StrEnum):
     TEXT = "text"
     IMAGE_URL = "image_url"
 
-
+class AgentText(StrEnum):
     """Prompts for the chatbot and ranking agents."""
     RERANK_SYSTEM = (_PROMPT_DIR / "rerank_system.md").read_text("utf-8")
     CHATBOT_SYSTEM = (_PROMPT_DIR / "chatbot_system.md").read_text("utf-8")
-
     PARSE_SYSTEM = (_PROMPT_DIR / "parse_system.md").read_text("utf-8")
+    PARSE_USER = "Request: {query}"
+
+class ToolText(StrEnum):
+    """Text for tool descriptions and parameters."""
+
+    SEARCH_DESC = "Search and rank recipes by keywords"
+    QUERY_DESC = "Keywords for searching recipes"
+    RANK_DESC = "Return a new ordering for the given recipes"
     ORDER_PARAM = "New ordering of recipe numbers"
 
+class UserPrompt(StrEnum):
+    PROCESS = "Process images"
 
-    PARSE_SYSTEM = (
-        "Interpret the user's request and return recipe search parameters as JSON."
-    )
-    PARSE_USER = "Request: {query}"
+
+class ModelName(StrEnum):
+    VISION = "mistral-small-2503"
 
 class ToolCall(StrEnum):
     SEARCH_RECIPES = "search_recipes"
     RANK_RECIPES = "rank_recipes"
-
-
-class AgentText(StrEnum):
-    """Prompts for agentic reranking."""
-
-    RERANK_SYSTEM = (
-        "You are an expert chef helping choose recipes for the user."
-    )
-    RERANK_USER = (
-        "Given the user's intent '{query}', order the following recipe URLs by relevance."
-    )
-
-    CHATBOT_SYSTEM = (
-        "You are RecipeBot, an expert cooking assistant. Hold a friendly conversation to"
-        " understand the user's preferences, ingredients, and any images they upload."
-        " When the user is ready, call the search tool with an appropriate keyword"
-        " query."
-        " After the search tool returns a list of recipes, rank them based on how well"
-        " they match the user's intent and respond with your top picks."
-    )
-
 
 class CacheLimit(IntEnum):
     MAX_TOKENS = 4096

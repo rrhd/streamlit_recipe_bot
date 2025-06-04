@@ -67,7 +67,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
             response = chat_complete(
                 config,
                 messages=_prep_history(chat_history),
-                model=ModelName.CHAT_SMALL,
+                model=ModelName.VISION,
                 tools=[SEARCH_TOOL],
                 tool_choice="auto",
             )
@@ -112,7 +112,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
                 follow = chat_complete(
                     config,
                     messages=_prep_history(chat_history),
-                    model=ModelName.CHAT_SMALL,
+                    model=ModelName.VISION,
                 )
             except Exception as e:
                 st.error(f"Chat API error: {e}")
