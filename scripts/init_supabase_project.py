@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 import toml
 from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from enum import StrEnum
 
@@ -31,13 +32,21 @@ class SecretDefaults(StrEnum):
     DB_PASSWORD = "postgres"
 
 
-class SetupConfig(BaseModel):
-    access_token: str = Field(default_factory=lambda: os.getenv(SupabaseEnv.ACCESS_TOKEN, ""))
-    org_id: str | None = Field(default_factory=lambda: os.getenv(SupabaseEnv.ORG_ID))
+class SetupConfig(BaseSettings):
+    access_token: str = Field(
+        default="",
+        validation_alias=SupabaseEnv.ACCESS_TOKEN.value,
+    )
+    org_id: str | None = Field(
+        default=None,
+        validation_alias=SupabaseEnv.ORG_ID.value,
+    )
     project_name: str = Field(default=SecretDefaults.PROJECT_NAME)
     region: str = Field(default=SecretDefaults.REGION)
     db_password: str = Field(default=SecretDefaults.DB_PASSWORD)
     secrets_path: Path = Field(default_factory=lambda: Path(SecretDefaults.SECRETS_PATH))
+
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 class ProjectInfo(BaseModel):
