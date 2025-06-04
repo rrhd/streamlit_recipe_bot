@@ -563,3 +563,6 @@ class SearchLimit(IntEnum):
 
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+PROJECT_DIR = Path(__file__).resolve().parent
+SPACY_MODEL = PROJECT_DIR / "taste_model/model-best"
