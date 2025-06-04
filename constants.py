@@ -443,6 +443,7 @@ class LogMsg(StrEnum):
     ADV_SEARCH_PROCESSED = (
         "Processed results. HTML length: {html_len}, Mapping keys: {map_keys}"
     )
+    ADV_SEARCH_RESET_CLICKED = "Advanced search reset button clicked."
     SIMPLE_SEARCH_CLICKED = "Simple search button clicked."
     SIMPLE_SEARCH_PARAMS = (
         "Calling query_top_k for simple search with params: {params_json}"
