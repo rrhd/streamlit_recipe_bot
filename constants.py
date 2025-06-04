@@ -1,6 +1,8 @@
 import os
 import tempfile
 from enum import StrEnum, IntEnum
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool, ToolTypes
 
 
 class FileExt(StrEnum):
@@ -513,11 +515,51 @@ class UserPrompt(StrEnum):
 
 class ModelName(StrEnum):
     VISION = "mistral-small-2503"
+    CHAT_SMALL = "mistral-small-latest"
+    EMBED_BASE = "mistral-embed"
+
+
+class ToolText(StrEnum):
+    """Text for tool descriptions and parameters."""
+
+    SEARCH_DESC = "Search and rank recipes by keywords"
+    QUERY_DESC = "Keywords for searching recipes"
+    RANK_DESC = "Return a new ordering for the given recipes"
+    ORDER_PARAM = "New ordering of recipe numbers"
+
+
+class ToolCall(StrEnum):
+    SEARCH_RECIPES = "search_recipes"
+    RANK_RECIPES = "rank_recipes"
+
+
+class AgentText(StrEnum):
+    """Prompts for agentic reranking."""
+
+    RERANK_SYSTEM = (
+        "You are an expert chef helping choose recipes for the user."
+    )
+    RERANK_USER = (
+        "Given the user's intent '{query}', order the following recipe URLs by relevance."
+    )
+
+    CHATBOT_SYSTEM = (
+        "You are RecipeBot, an expert cooking assistant. Hold a friendly conversation to"
+        " understand the user's preferences, ingredients, and any images they upload."
+        " When the user is ready, call the search tool with an appropriate keyword"
+        " query."
+        " After the search tool returns a list of recipes, rank them based on how well"
+        " they match the user's intent and respond with your top picks."
+    )
 
 
 class CacheLimit(IntEnum):
     MAX_TOKENS = 4096
     MAX_IMAGES = 8
+
+
+class SearchLimit(IntEnum):
+    RESULTS = 5
 
 
 class Suffix(StrEnum):

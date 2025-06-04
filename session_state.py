@@ -63,6 +63,8 @@ class SessionStateKeys(StrEnum):
     SIMPLE_QUERY_INPUT = "widget_simple_query"
     LIBRARY_BOOK_SELECTOR = "widget_library_book_selector"
 
+    CHAT_HISTORY = "chat_history"
+
     ALL_SOURCES_LIST = "all_sources_list"
     LIBRARY_BOOK_MAPPING = "library_book_mapping"
     PROFILE_STATUS_MESSAGE = "profile_status_message"

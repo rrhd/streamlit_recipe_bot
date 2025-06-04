@@ -25,6 +25,8 @@ class UiText(StrEnum):
     TAB_ADVANCED = "Advanced Search"
     TAB_SIMPLE = "Simple Search"
     TAB_LIBRARY = "Library"
+    TAB_CHAT = "Chatbot"
+    TAB_MISTRAL = "Mistral Docs"
     SIDEBAR_PAGE_SELECT = "Select Page"
     ABOUT_MARKDOWN = """
         # Recipe Finder
@@ -71,6 +73,8 @@ class UiText(StrEnum):
 
         - **Library Tab:**
           Browse cookbooks downloaded from Google Drive. Requires `ebook-convert` (from Calibre) to be installed and in the PATH for non-PDF files.
+        - **Chatbot Tab:**
+          Chat with an assistant that can understand free-form requests like "I feel like a summery treat" or lists of ingredients. It may ask follow-up questions and then search for suitable recipes.
         """
 
     HEADER_ADVANCED_SEARCH = "Advanced Recipe Search"
@@ -166,6 +170,54 @@ class UiText(StrEnum):
     WARN_NO_BOOKS_FOUND = "No books found in the configured Google Drive folder."
     SELECTBOX_LABEL_BOOK = "Choose a book"
     BUTTON_REFRESH_BOOKS = "Refresh Book List"
+    HEADER_CHAT = "Chatbot Search"
+    CHAT_PLACEHOLDER = "Ask me for recipe ideas..."
+    CHAT_INIT_MESSAGE = "Hello! Tell me what recipes you're interested in."
+    CHAT_ABOUT = (
+        "Use the Chatbot tab to have a natural conversation about what you want to cook."
+        " You can describe a craving, list ingredients, or upload pictures, and the bot"
+        " will find suitable recipes."
+    )
+    HEADER_MISTRAL_DOCS = "Mistral Client Examples"
+    MISTRAL_OVERVIEW = (
+        "These examples showcase Mistral's ability to handle text, images, embeddings,"
+        " and streaming responses using the unified `Mistral` client."
+    )
+    SUBHEADER_IMAGES = "Handling Images"
+    SUBHEADER_EMBEDDINGS = "Generating Embeddings"
+    SUBHEADER_STREAMING = "Streaming Responses"
+    EXAMPLE_IMAGES = """\
+from mistralai import Mistral, UserMessage
+from mistralai.models import ImageURLChunk, TextChunk
+
+client = Mistral(api_key="YOUR_KEY")
+messages = [
+    UserMessage(content=[
+        ImageURLChunk(image_url={"url": "https://example.com/img.jpg"}),
+        TextChunk(text="What's shown here?")
+    ])
+]
+resp = client.chat.complete(model="mistral-large-latest", messages=messages)
+    """
+    EXAMPLE_EMBEDDINGS = """\
+from mistralai import Mistral
+
+client = Mistral(api_key="YOUR_KEY")
+emb = client.embeddings.create(model="mistral-embed", inputs=["hello world"])
+    """
+    EXAMPLE_STREAMING = """\
+from mistralai import Mistral, UserMessage
+
+client = Mistral(api_key="YOUR_KEY")
+for chunk in client.chat.stream(
+    model="mistral-large-latest", messages=[UserMessage(content="Hello")]
+):
+    print(chunk.data.choices[0].delta.content, end="")
+    """
+    TOOL_ARGS_INVALID = "I couldn't understand that search request."
+    EXPANDER_SEARCH_RESULTS = "Search Results"
+    COLUMN_RECIPE_TITLE = "Recipe Title"
+    COLUMN_SOURCE_URL = "Source / URL"
     ERROR_BOOK_DETAILS_NOT_FOUND = "Details not found for selected book: {label}"
     ERROR_BOOK_MISSING_DETAILS = (
         "Missing critical book details (ID, name, or local path)."
