@@ -4,6 +4,8 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from constants import MiscValues
+
 import diskcache
 from models import QueryRequest, SimpleSearchRequest
 from query_top_k import (
@@ -27,7 +29,7 @@ def fetch_db_last_updated() -> datetime:
 class CacheManager:
     """Manages a persistent disk cache and invalidates on DB updates."""
 
-    def __init__(self, cache_dir: str = "recipe_cache") -> None:
+    def __init__(self, cache_dir: str = MiscValues.CACHE_DIR) -> None:
         """
         Initializes the disk cache.
 

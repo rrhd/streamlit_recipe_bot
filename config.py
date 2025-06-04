@@ -49,7 +49,7 @@ class AppConfig(BaseSettings):
     )
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
-    cache_dir: Path | None = Field(default=None)
+    cache_dir: Path = Field(default_factory=lambda: Path(MiscValues.CACHE_DIR))
     max_log_length: int = 200
     truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(
