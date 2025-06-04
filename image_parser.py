@@ -1,13 +1,14 @@
 import base64
-import base64
-from typing import Optional
 
-from config import CONFIG, AppConfig
+from config import AppConfig
 from process_images import LoggerManager, CacheManager, MistralInterface
 
 
 class ImageParser:
-    def __init__(self, cfg: AppConfig = CONFIG) -> None:
+    def __init__(self, cfg: AppConfig | None = None) -> None:
+        import streamlit as st
+
+        cfg = cfg or AppConfig(**getattr(st, "secrets", {}))
         self._logger = LoggerManager(cfg)
         self._cache = CacheManager(cfg)
         self._api = MistralInterface(cfg, self._cache)
@@ -29,5 +30,5 @@ class ImageParser:
         return []
 
 
-def parse_image_bytes(data: bytes, parser: Optional[ImageParser] = None) -> list[str]:
+def parse_image_bytes(data: bytes, parser: ImageParser | None = None) -> list[str]:
     return (parser or ImageParser()).parse_bytes(data)
