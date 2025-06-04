@@ -1,7 +1,7 @@
 import base64
 
 from config import AppConfig
-from process_images import LoggerManager, CacheManager, MistralInterface
+from process_images import CacheManager, MistralInterface
 
 
 class ImageParser:
@@ -9,7 +9,6 @@ class ImageParser:
         import streamlit as st
 
         cfg = cfg or AppConfig(**getattr(st, "secrets", {}))
-        self._logger = LoggerManager(cfg)
         self._cache = CacheManager(cfg)
         self._api = MistralInterface(cfg, self._cache)
         if cfg.prompt_path and cfg.prompt_path.exists():

@@ -602,7 +602,6 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
     )
     book_labels = []
     book_mapping: dict[str, dict[str, str]] = {}
-    all_files_count = 0
 
     try:
         page_token = None
@@ -628,7 +627,6 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
                 return [], {}
 
             for f in files:
-                all_files_count += 1
                 file_name = f.get(GDriveKeys.FILE_NAME)
                 file_id = f.get(GDriveKeys.FILE_ID)
 
@@ -735,7 +733,7 @@ def download_gdrive_file(
                 UiText.SPINNER_DOWNLOADING_ON_DEMAND.format(filename=file_name)
             ):
                 while not done:
-                    status, done = downloader.next_chunk(
+                    _, done = downloader.next_chunk(
                         num_retries=CONFIG.gdrive_download_retries
                     )
 

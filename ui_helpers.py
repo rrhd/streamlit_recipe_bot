@@ -18,8 +18,7 @@ class UiText(StrEnum):
     SPINNER_PROCESSING_IMAGE = "Detecting ingredients…"
     LABEL_FILE_INPUT = "…or upload an image"
     LABEL_CAMERA_INPUT = "Take a picture"
-    PREPARING_BOOK = "Preparing '{label}'…"
-    SPINNER_LOADING_PDF = "Loading PDF..."
+    
     BUTTON_OPEN_BOOK_PDF = "Open Book PDF"
     PAGE_TITLE = "Recipe Finder"
     TAB_ABOUT = "About"
@@ -159,12 +158,7 @@ class UiText(StrEnum):
     )
 
     HEADER_LIBRARY = "Cookbook Library"
-    WARN_EBOOK_CONVERT_MISSING = (
-        "**`ebook-convert` (from Calibre) was not found.** "
-        "Non-PDF books cannot be converted. Please install Calibre and ensure "
-        "it's in your system PATH, or add `calibre` to `.streamlit/packages.txt` "
-        "if deploying to Streamlit Community Cloud."
-    )
+    
     WARN_NO_BOOKS_FOUND = "No books found in the configured Google Drive folder."
     SELECTBOX_LABEL_BOOK = "Choose a book"
     BUTTON_REFRESH_BOOKS = "Refresh Book List"
@@ -179,16 +173,7 @@ class UiText(StrEnum):
         "Error: Could not find the file '{filename}' for processing."
     )
     ERROR_BOOK_DOWNLOAD_FAIL = "Failed to download or find local file for '{label}'"
-    LINK_OPEN_BOOK_HTML = (
-        '<a href="{data_uri}" target="_blank" '
-        'style="font-size: 1.2em; padding: 10px; border: 1px solid #ccc; border-radius: 5px; text-decoration: none;">'
-        "📖 Open '{label}' in New Tab"
-        "</a><br><br><small>(Clicking should open in a new tab using your browser's PDF viewer. Behavior depends on browser settings and PDF size; some browsers may still force a download.)</small>"
-    )
-
-    FATAL_CONFIG_LOAD_FAIL = (
-        "FATAL: Application configuration failed to load: {error}. Cannot continue."
-    )
+    
     ERROR_SOURCES_LOAD_FAIL = "Error fetching initial source data: {error}"
     ERROR_SOURCES_DISPLAY = "Error: Could not load sources"
     ERROR_BOOKS_LOAD_FAIL = "Error listing books from Drive: {error}"
@@ -241,71 +226,6 @@ class UiText(StrEnum):
     SPINNER_CONVERTING_PDF = "Converting {filename} to PDF..."
 
 
-class HtmlStyle(StrEnum):
-    """Inline styles or style block content."""
-
-    RECIPE_STYLE_BLOCK = """
-    <style>
-      .recipe-container {
-          font-family: 'Arial', sans-serif;
-          line-height: 1.6;
-          padding: 20px;
-          max-width: 800px;
-          margin: auto;
-          background-color: #fdfdfd; /* Light mode background */
-          color: #333; /* Light mode text */
-          border: 1px solid #ddd;
-          border-radius: 5px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      .recipe-title {
-          font-size: 2em;
-          margin-bottom: 0.5em;
-          color: inherit; /* Inherit color from container */
-      }
-      .recipe-section {
-          margin-bottom: 1em;
-      }
-      .recipe-section h3 {
-          margin: 0 0 0.5em 0;
-          padding-bottom: 5px;
-          border-bottom: 1px solid #ccc; /* Light mode border */
-          color: inherit; /* Inherit color */
-      }
-      .recipe-ingredients li,
-      .recipe-instructions li {
-          margin-bottom: 5px;
-      }
-      .recipe-source a {
-          color: #1a73e8; /* Light mode link */
-          text-decoration: none;
-      }
-      .recipe-source a:hover {
-          text-decoration: underline;
-      }
-      /* Basic Dark Mode Adaptation (Streamlit handles theme switching) */
-      body.dark-mode .recipe-container { /* Example selector, adjust if needed */
-          background-color: #222;
-          color: #eee;
-          border: 1px solid #444;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-      }
-       body.dark-mode .recipe-section h3 {
-           border-bottom: 1px solid #555;
-       }
-       body.dark-mode .recipe-source a {
-           color: #9ecfff; /* Dark mode link */
-       }
-    </style>
-    """
-    RESULTS_TABLE_STYLE = (
-        "border-collapse: collapse; width: 100%; border: 1px solid #ccc;"
-    )
-    RESULTS_HEADER_STYLE = "background-color: #f0f0f0;"
-    RESULTS_CELL_STYLE = "padding: 5px; border: 1px solid #ccc;"  # Reduced padding
-    RESULTS_HEADER_CELL_STYLE = (
-        "padding: 8px; border: 1px solid #ccc; text-align: left;"
-    )
 
 
 def display_recipe_markdown(recipe_data: dict[str, Any]) -> str:
@@ -459,24 +379,3 @@ def display_recipe_markdown(recipe_data: dict[str, Any]) -> str:
 
     return markdown_str
 
-
-def open_pdf_in_new_tab(pdf_path: str):
-    with open(pdf_path, "rb") as f:
-        pdf_bytes = f.read()
-    b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-
-    js = f"""
-    <script>
-      const binStr = atob("{b64}");
-      const len = binStr.length;
-      const u8arr = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {{
-        u8arr[i] = binStr.charCodeAt(i);
-      }}
-      const blob = new Blob([u8arr], {{ type: 'application/pdf' }});
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank'); 
-    </script>
-    """
-
-    components.html(js, height=0)

@@ -41,7 +41,7 @@ def render_library_page(st: st, config: AppConfig) -> None:
         to_pdf_cached.clear()
 
         try:
-            new_labels, new_mapping = list_drive_books_cached()
+            _, new_mapping = list_drive_books_cached()
             st.session_state[SessionStateKeys.LIBRARY_BOOK_MAPPING] = new_mapping
 
             current_selection = st.session_state.get(
