@@ -630,25 +630,25 @@ def render_advanced_search_page(
         defaults = config.defaults
 
         st.session_state[SessionStateKeys.LOADED_INGREDIENTS_TEXT] = defaults.ingredients_text
-        st.session_state[SessionStateKeys.ADV_INGREDIENTS_INPUT] = defaults.ingredients_text
+        st.session_state.pop(SessionStateKeys.ADV_INGREDIENTS_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_MUST_USE_TEXT] = defaults.must_use_text
-        st.session_state[SessionStateKeys.ADV_MUST_USE_INPUT] = defaults.must_use_text
+        st.session_state.pop(SessionStateKeys.ADV_MUST_USE_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_EXCLUDED_TEXT] = defaults.excluded_text
-        st.session_state[SessionStateKeys.ADV_EXCLUDED_INPUT] = defaults.excluded_text
+        st.session_state.pop(SessionStateKeys.ADV_EXCLUDED_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_KEYWORDS_INCLUDE] = defaults.keywords_include
-        st.session_state[SessionStateKeys.ADV_KEYWORDS_INCLUDE_INPUT] = defaults.keywords_include
+        st.session_state.pop(SessionStateKeys.ADV_KEYWORDS_INCLUDE_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_KEYWORDS_EXCLUDE] = defaults.keywords_exclude
-        st.session_state[SessionStateKeys.ADV_KEYWORDS_EXCLUDE_INPUT] = defaults.keywords_exclude
+        st.session_state.pop(SessionStateKeys.ADV_KEYWORDS_EXCLUDE_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_MIN_ING_MATCHES] = defaults.min_ing_matches
-        st.session_state[SessionStateKeys.ADV_MIN_ING_MATCHES_INPUT] = defaults.min_ing_matches
+        st.session_state.pop(SessionStateKeys.ADV_MIN_ING_MATCHES_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_MAX_STEPS] = defaults.max_steps
-        st.session_state[SessionStateKeys.ADV_MAX_STEPS_INPUT] = defaults.max_steps
+        st.session_state.pop(SessionStateKeys.ADV_MAX_STEPS_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_TAG_FILTER_MODE] = default_tag_filter_mode_enum
-        st.session_state[SessionStateKeys.ADV_TAG_FILTER_MODE_INPUT] = default_tag_filter_mode_enum
+        st.session_state.pop(SessionStateKeys.ADV_TAG_FILTER_MODE_INPUT, None)
         st.session_state[SessionStateKeys.LOADED_USER_COVERAGE] = defaults.user_coverage * 100.0
-        st.session_state[SessionStateKeys.ADV_USER_COVERAGE_SLIDER] = defaults.user_coverage * 100.0
+        st.session_state.pop(SessionStateKeys.ADV_USER_COVERAGE_SLIDER, None)
         st.session_state[SessionStateKeys.LOADED_RECIPE_COVERAGE] = defaults.recipe_coverage * 100.0
-        st.session_state[SessionStateKeys.ADV_RECIPE_COVERAGE_SLIDER] = defaults.recipe_coverage * 100.0
+        st.session_state.pop(SessionStateKeys.ADV_RECIPE_COVERAGE_SLIDER, None)
 
         for loaded_key, widget_key in [
             (SessionStateKeys.LOADED_COURSE_FILTER, SessionStateKeys.ADV_COURSE_FILTER_INPUT),
@@ -663,7 +663,7 @@ def render_advanced_search_page(
             (SessionStateKeys.LOADED_EXCLUDE_CUISINE_FILTER, SessionStateKeys.ADV_EXCLUDE_CUISINE_FILTER_INPUT),
         ]:
             st.session_state[loaded_key] = []
-            st.session_state[widget_key] = []
+            st.session_state.pop(widget_key, None)
 
         all_sources_list = [
             s
@@ -671,7 +671,7 @@ def render_advanced_search_page(
             if s != UiText.ERROR_SOURCES_DISPLAY
         ]
         st.session_state[SessionStateKeys.LOADED_SOURCES] = all_sources_list
-        st.session_state[SessionStateKeys.ADV_SOURCE_SELECTOR] = all_sources_list
+        st.session_state.pop(SessionStateKeys.ADV_SOURCE_SELECTOR, None)
 
         st.session_state[SessionStateKeys.ADVANCED_SEARCH_RESULTS_HTML] = defaults.profile_message
         st.session_state[SessionStateKeys.ADVANCED_SEARCH_MAPPING] = {}
