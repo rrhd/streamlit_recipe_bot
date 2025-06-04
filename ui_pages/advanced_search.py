@@ -332,7 +332,7 @@ def render_advanced_search_page(
             ),
             ProfileDataKeys.TAG_FILTER_MODE: st.session_state.get(
                 SessionStateKeys.ADV_TAG_FILTER_MODE_INPUT, default_tag_filter_mode_enum
-            ).value,
+            ),
             ProfileDataKeys.MAX_STEPS: int(
                 st.session_state.get(
                     SessionStateKeys.ADV_MAX_STEPS_INPUT, defaults.max_steps
@@ -499,7 +499,7 @@ def render_advanced_search_page(
                 )
 
                 loaded_mode_str = options.get(
-                    ProfileDataKeys.TAG_FILTER_MODE, default_tag_filter_mode_enum.value
+                    ProfileDataKeys.TAG_FILTER_MODE, default_tag_filter_mode_enum
                 )
                 try:
                     st.session_state[SessionStateKeys.LOADED_TAG_FILTER_MODE] = (
@@ -798,7 +798,7 @@ def render_advanced_search_page(
                 key=SessionStateKeys.ADV_TAG_FILTER_MODE_INPUT,
                 index=tag_filter_options.index(current_mode_enum),
                 horizontal=True,
-                format_func=lambda mode: mode.value,
+                format_func=lambda mode: str(mode),
             )
 
             include_col, exclude_col = st.columns(2)
@@ -833,7 +833,7 @@ def render_advanced_search_page(
                     ),
                 ]:
                     st.multiselect(
-                        cat_key.value.replace("_", " ").title(),
+                        str(cat_key).replace("_", " ").title(),
                         options=config.category_choices.get(cat_key, []),
                         key=widget_key,
                         default=st.session_state.get(loaded_key, []),
@@ -868,7 +868,7 @@ def render_advanced_search_page(
                     ),
                 ]:
                     st.multiselect(
-                        cat_key.value.replace("_", " ").title() + " ",
+                        str(cat_key).replace("_", " ").title() + " ",
                         options=config.category_choices.get(cat_key, []),
                         key=widget_key,
                         default=st.session_state.get(loaded_key, []),
