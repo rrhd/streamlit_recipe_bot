@@ -24,6 +24,7 @@ logging.basicConfig(
 
 
 def get_db_connection():
+    """Return an SQLite connection with a REGEXP helper."""
     conn = sqlite3.connect(DATABASE)
     conn.create_function(
         "REGEXP",
