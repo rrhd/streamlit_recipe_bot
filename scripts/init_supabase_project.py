@@ -1,12 +1,10 @@
 import logging
-import os
 import time
 from pathlib import Path
 
 import requests
 import toml
 from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from enum import StrEnum
 
@@ -32,21 +30,21 @@ class SecretDefaults(StrEnum):
     DB_PASSWORD = "postgres"
 
 
-class SetupConfig(BaseSettings):
-    access_token: str = Field(
-        default="",
-        validation_alias=SupabaseEnv.ACCESS_TOKEN.value,
-    )
-    org_id: str | None = Field(
-        default=None,
-        validation_alias=SupabaseEnv.ORG_ID.value,
-    )
+class SetupConfig(BaseModel):
+    access_token: str = ""
+    org_id: str | None = None
     project_name: str = Field(default=SecretDefaults.PROJECT_NAME)
     region: str = Field(default=SecretDefaults.REGION)
     db_password: str = Field(default=SecretDefaults.DB_PASSWORD)
     secrets_path: Path = Field(default_factory=lambda: Path(SecretDefaults.SECRETS_PATH))
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    @classmethod
+    def load(cls) -> "SetupConfig":
+        path = Path(SecretDefaults.SECRETS_PATH)
+        data = toml.loads(path.read_text()) if path.exists() else {}
+        token = data.get("supabase_access_token", "")
+        org_id = data.get("supabase_org_id")
+        return cls(access_token=token, org_id=org_id, secrets_path=path)
 
 
 class ProjectInfo(BaseModel):
@@ -120,20 +118,12 @@ def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
-    cfg = SetupConfig()
-
-    if not cfg.access_token and cfg.secrets_path.exists():
-        try:
-            cfg.access_token = toml.loads(cfg.secrets_path.read_text()).get(
-                "supabase_access_token", ""
-            )
-        except Exception as err:
-            logging.warning("Could not read secrets.toml: %s", err)
+    cfg = SetupConfig.load()
 
     if not cfg.access_token:
         raise RuntimeError(
             "Personal access token missing. "
-            "Set SUPABASE_ACCESS_TOKEN or add 'supabase_access_token' in secrets.toml."
+            "Add 'supabase_access_token' to the secrets file."
         )
     org_id = _get_org_id(cfg)
     logging.info("Using organization %s", org_id)

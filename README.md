@@ -10,10 +10,11 @@ The Advanced Search page now includes a **Reset Fields** button to quickly resto
 
 Scripts in the `scripts/` directory help initialize and migrate the profile database to Supabase.
 
-1. Create a project and write credentials:
+1. Create a project and write credentials. Add `supabase_access_token` to
+   `.streamlit/secrets.toml` and run:
 
    ```bash
-   SUPABASE_ACCESS_TOKEN=<token> python scripts/init_supabase_project.py
+   python scripts/init_supabase_project.py
    ```
 
 2. Upload existing profiles to the new instance:
@@ -28,8 +29,7 @@ Scripts in the `scripts/` directory help initialize and migrate the profile data
    PYTHONPATH=. python scripts/check_supabase.py
    ```
 
-The configuration loader checks environment variables if the matching
-entries are not present in `st.secrets`. For Supabase you can set
-`SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_API_KEY`, and
-`SUPABASE_DB_URL` to run the scripts without a secrets file. The
-`supabase_access_token` value may also be placed in `.streamlit/secrets.toml`.
+The scripts read Supabase credentials from `.streamlit/secrets.toml`. If that
+file is missing you can instead supply `SUPABASE_ACCESS_TOKEN`,
+`SUPABASE_URL`, `SUPABASE_API_KEY`, and `SUPABASE_DB_URL` as environment
+variables.
