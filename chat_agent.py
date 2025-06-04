@@ -8,7 +8,12 @@ from pydantic import BaseModel
 
 from config import AppConfig
 from constants import ModelName, ToolText, ToolCall, AgentText, SearchLimit
-from models import QueryRequest, RecipeSearchArgs, RecipeRankArgs
+from models import (
+    QueryRequest,
+    RecipeSearchArgs,
+    RecipeRankArgs,
+    strict_model_schema,
+)
 from mistralai.models.function import Function
 from mistralai.models.tool import Tool
 from query_top_k import query_top_k
@@ -24,7 +29,7 @@ SEARCH_TOOL = Tool(
     function=Function(
         name=ToolCall.SEARCH_RECIPES,
         description=ToolText.SEARCH_DESC,
-        parameters=RecipeSearchArgs.model_json_schema(),
+        parameters=strict_model_schema(RecipeSearchArgs),
     ),
 )
 
@@ -33,7 +38,7 @@ RANK_TOOL = Tool(
     function=Function(
         name=ToolCall.RANK_RECIPES,
         description=ToolText.RANK_DESC,
-        parameters=RecipeRankArgs.model_json_schema(),
+        parameters=strict_model_schema(RecipeRankArgs),
     ),
 )
 
