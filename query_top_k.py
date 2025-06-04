@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 import sqlite3
 
@@ -11,7 +12,7 @@ from scipy.optimize import linear_sum_assignment
 
 from nlp_utils import get_canonical_ingredient
 
-DATABASE = "data/recipe_links.db"
+DATABASE = os.environ.get("RECIPE_DB_PATH", "data/recipe_links.db")
 CONCURRENCY_LIMIT = 5
 
 
@@ -61,9 +62,14 @@ def deduplicate_candidates(
     if n == 0:
         return []
 
-    candidate_urls = np.array([url for url, _ in candidates])
+    candidate_urls = [url for url, _ in candidates]
+    candidate_titles = np.array([
+        recipes_dict.get(url, {}).get("title", url) for url in candidate_urls
+    ])
 
-    sim_matrix = cdist(candidate_urls, candidate_urls, scorer=fuzz.token_set_ratio)
+    sim_matrix = cdist(
+        candidate_titles, candidate_titles, scorer=fuzz.token_set_ratio
+    )
 
     lengths = np.array([len(json.dumps(recipes_dict[url])) for url in candidate_urls])
 
