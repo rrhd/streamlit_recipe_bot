@@ -49,7 +49,7 @@ class AppConfig(BaseSettings):
     )
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
-    cache_dir: Path | None = Field(default=None)
+    cache_dir: Path = Field(default_factory=lambda: Path(PathName.CACHE_DIR))
     spacy_model_path: Path = Field(
         default=Path(PathName.SPACY_MODEL)
     )
