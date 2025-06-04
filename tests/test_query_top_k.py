@@ -1,13 +1,9 @@
-import re
-import sys
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT))
-
+import pytest
 import query_top_k
+from constants import PROJECT_DIR
 
-query_top_k.DATABASE = 'data/test_recipes.db'
+query_top_k.DATABASE = PROJECT_DIR / 'data/test_recipes.db'
 
 def run_query(keywords=None, user_ingredients=None, min_ing_matches=None, top_n_db=10):
     if keywords is None:
@@ -25,7 +21,7 @@ def run_query(keywords=None, user_ingredients=None, min_ing_matches=None, top_n_
         top_n_db=top_n_db,
     )
 
-import pytest
+
 
 @pytest.mark.parametrize(
     "keywords, expected_min",

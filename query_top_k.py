@@ -5,7 +5,6 @@ import sqlite3
 
 import numpy as np
 import pandas as pd
-import spacy
 from rapidfuzz import fuzz
 from rapidfuzz.process import cdist
 from scipy.optimize import linear_sum_assignment
@@ -16,7 +15,6 @@ DATABASE = "data/recipe_links.db"
 CONCURRENCY_LIMIT = 5
 
 
-nlp = spacy.load("taste_model/model-best")
 
 logging.basicConfig(
     level=logging.INFO,
