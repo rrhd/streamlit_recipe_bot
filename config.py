@@ -11,7 +11,7 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix,
+    LogMsg, ModelName, Suffix, PathName,
 )
 
 
@@ -50,6 +50,9 @@ class AppConfig(BaseSettings):
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
     cache_dir: Path | None = Field(default=None)
+    spacy_model_path: Path = Field(
+        default=Path(PathName.SPACY_MODEL)
+    )
     max_log_length: int = 200
     truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(
@@ -66,6 +69,7 @@ class AppConfig(BaseSettings):
 
     book_dir: str | None = Field(default=None)
     full_profile_db_path: str | None = Field(default=None)
+    full_recipe_db_path: str | None = Field(default=None)
 
     essential_filenames: list[str] | None = Field(default=None)
 
@@ -227,6 +231,9 @@ class AppConfig(BaseSettings):
         ):
             self.full_profile_db_path = os.path.join(
                 self.download_dest_dir, self.profile_db_path
+            )
+            self.full_recipe_db_path = os.path.join(
+                self.download_dest_dir, PathName.RECIPE_DB
             )
         else:
             raise ValueError(
