@@ -16,7 +16,6 @@ from ui_pages.advanced_search import render_advanced_search_page
 from ui_pages.library import render_library_page
 from ui_pages.simple_search import render_simple_search_page
 from ui_pages.chatbot import render_chatbot_page
-from ui_pages.mistral_doc import render_mistral_doc_page
 
 st.set_page_config(layout="wide", page_title=UiText.PAGE_TITLE)
 
@@ -157,7 +156,6 @@ page_options = [
     UiText.TAB_SIMPLE,
     UiText.TAB_LIBRARY,
     UiText.TAB_CHAT,
-    UiText.TAB_MISTRAL,
 ]
 
 st.sidebar.radio(
@@ -191,12 +189,6 @@ elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_LIBRARY:
 
 elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_CHAT:
     render_chatbot_page(
-        st,
-        CONFIG,
-    )
-
-elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_MISTRAL:
-    render_mistral_doc_page(
         st,
         CONFIG,
     )

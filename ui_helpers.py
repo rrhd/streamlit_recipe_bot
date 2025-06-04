@@ -14,7 +14,6 @@ class UiText(StrEnum):
 
     WARNING_NO_INGREDIENTS_FROM_IMAGE = "No ingredients found."
     SUCCESS_INGREDIENTS_FROM_IMAGE = "✓ {count} Ingredients added"
-    SUCCESS_FIELDS_RESET = "✓ Fields reset to defaults"
     SPINNER_PROCESSING_IMAGE = "Detecting ingredients…"
     LABEL_FILE_INPUT = "…or upload an image"
     LABEL_CAMERA_INPUT = "Take a picture"
@@ -154,42 +153,6 @@ class UiText(StrEnum):
     LABEL_SIMPLE_QUERY = "Search Query (Keywords for Title/Description)"
     PLACEHOLDER_SIMPLE_QUERY = "e.g. easy chicken stir fry"
     BUTTON_SIMPLE_SEARCH = "Simple Search"
-    MARKDOWN_SIMPLE_RESULTS = "### Simple Search Results"
-    WARN_EMPTY_QUERY = "Please enter a search query."
-    MSG_SIMPLE_QUERY_PROMPT = "<p>Enter a query above.</p>"
-    MSG_SIMPLE_NO_RESULTS = "<p>No results found for query: '{query_text}'</p>"
-    ERROR_DURING_SIMPLE_SEARCH = (
-        "<p style='color:red;'>Error during simple search: {error}</p>"
-    )
-
-    HEADER_LIBRARY = "Cookbook Library"
-    WARN_EBOOK_CONVERT_MISSING = (
-        "**`ebook-convert` (from Calibre) was not found.** "
-        "Non-PDF books cannot be converted. Please install Calibre and ensure "
-        "it's in your system PATH, or add `calibre` to `.streamlit/packages.txt` "
-        "if deploying to Streamlit Community Cloud."
-    )
-    WARN_NO_BOOKS_FOUND = "No books found in the configured Google Drive folder."
-    SELECTBOX_LABEL_BOOK = "Choose a book"
-    BUTTON_REFRESH_BOOKS = "Refresh Book List"
-    HEADER_CHAT = "Chatbot Search"
-    CHAT_PLACEHOLDER = "Ask me for recipe ideas..."
-    CHAT_INIT_MESSAGE = "Hello! Tell me what recipes you're interested in."
-    CHAT_ABOUT = (
-        "Use the Chatbot tab to have a natural conversation about what you want to cook."
-        " You can describe a craving, list ingredients, or upload pictures, and the bot"
-        " will find suitable recipes."
-    )
-    CHAT_FILE_LABEL = "Upload images"
-    HEADER_MISTRAL_DOCS = "Mistral Client Examples"
-    MISTRAL_OVERVIEW = (
-        "These examples showcase Mistral's ability to handle text, images, embeddings,"
-        " and streaming responses using the unified `Mistral` client."
-    )
-    SUBHEADER_IMAGES = "Handling Images"
-    SUBHEADER_EMBEDDINGS = "Generating Embeddings"
-    SUBHEADER_STREAMING = "Streaming Responses"
-    EXAMPLE_IMAGES = """\
 from mistralai import Mistral, UserMessage
 from mistralai.models import ImageURLChunk, TextChunk
 
