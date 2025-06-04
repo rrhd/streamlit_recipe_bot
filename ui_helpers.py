@@ -14,6 +14,7 @@ class UiText(StrEnum):
 
     WARNING_NO_INGREDIENTS_FROM_IMAGE = "No ingredients found."
     SUCCESS_INGREDIENTS_FROM_IMAGE = "✓ {count} Ingredients added"
+    SUCCESS_FIELDS_RESET = "✓ Fields reset to defaults"
     SPINNER_PROCESSING_IMAGE = "Detecting ingredients…"
     LABEL_FILE_INPUT = "…or upload an image"
     LABEL_CAMERA_INPUT = "Take a picture"
@@ -119,6 +120,7 @@ class UiText(StrEnum):
     BUTTON_SAVE_PROFILE = "Save Current Settings"
     BUTTON_LOAD_PROFILE = "Load Most Recent Profile"
     BUTTON_SEARCH_RECIPES = "Search Recipes"
+    BUTTON_RESET_FIELDS = "Reset Fields"
     MARKDOWN_MATCHING_RECIPES = "##### Matching Recipes Table"
     MARKDOWN_SELECT_RECIPE = "##### Select Recipe for Details"
     MARKDOWN_RECIPE_DETAILS = "##### Recipe Details"
