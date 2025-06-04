@@ -138,7 +138,6 @@ def initialize_session_state():
         SessionStateKeys.PROFILE_STATUS_MESSAGE: defaults.profile_message,
         SessionStateKeys.CHAT_HISTORY: [
             SystemMessage(content=AgentText.CHATBOT_SYSTEM),
-            AssistantMessage(content=UiText.CHAT_INIT_MESSAGE),
         ],
     }
 

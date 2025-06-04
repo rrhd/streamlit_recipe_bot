@@ -18,9 +18,19 @@ def get_client(api_key: str) -> Mistral:
     return Mistral(api_key=api_key)
 
 
+def _serialize(obj: Any) -> Any:
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if isinstance(obj, list):
+        return [_serialize(o) for o in obj]
+    if isinstance(obj, dict):
+        return {k: _serialize(v) for k, v in obj.items()}
+    return obj
+
+
 def _cache_key(prefix: str, payload: Any) -> str:
     try:
-        body = json.dumps(payload, sort_keys=True)
+        body = json.dumps(_serialize(payload), sort_keys=True)
     except TypeError:
         body = str(payload)
     return f"{prefix}:{body}"
@@ -29,7 +39,9 @@ def _cache_key(prefix: str, payload: Any) -> str:
 def chat_complete(cfg: AppConfig, *, messages: list, model: ModelName, **kwargs: Any) -> Any:
     """Cached wrapper around Mistral.chat.complete."""
     client = get_client(cfg.api_key)
-    key = _cache_key("chat", {"model": model, "messages": [getattr(m, "model_dump", lambda: m)() for m in messages], **kwargs})
+    key = _cache_key(
+        "chat", {"model": model, "messages": [_serialize(m) for m in messages], **kwargs}
+    )
     if cached := _cache.get(key):
         return cached
     resp = client.chat.complete(model=model, messages=messages, **kwargs)
@@ -68,7 +80,7 @@ def chat_parse(
         "parse",
         {
             "model": model,
-            "messages": [getattr(m, "model_dump", lambda: m)() for m in messages],
+            "messages": [_serialize(m) for m in messages],
             "schema": response_format.__name__,
             **kwargs,
         },

@@ -19,6 +19,14 @@ from ui_helpers import UiText
 from mistral_utils import chat_complete
 
 
+def _prep_history(history: list) -> list:
+    first_user = next(
+        (i for i, m in enumerate(history) if isinstance(m, UserMessage)),
+        len(history),
+    )
+    return [history[0]] + history[first_user:]
+
+
 def render_chatbot_page(st: st, config: AppConfig) -> None:
     st.header(UiText.HEADER_CHAT)
     st.info(UiText.CHAT_ABOUT)
@@ -30,15 +38,11 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
 
     chat_history: list = st.session_state[SessionStateKeys.CHAT_HISTORY]
 
-    for msg in chat_history:
-        if isinstance(msg, SystemMessage):
-            continue
+    for msg in chat_history[1:]:
         st.chat_message(msg.role).markdown(msg.content)
 
     if len(chat_history) == 1:
-        init_msg = AssistantMessage(content=UiText.CHAT_INIT_MESSAGE)
-        chat_history.append(init_msg)
-        st.chat_message(init_msg.role).markdown(init_msg.content)
+        st.chat_message("assistant").markdown(UiText.CHAT_INIT_MESSAGE)
 
     uploaded_files = st.file_uploader(
         UiText.CHAT_FILE_LABEL,
@@ -62,7 +66,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
         try:
             response = chat_complete(
                 config,
-                messages=chat_history,
+                messages=_prep_history(chat_history),
                 model=ModelName.CHAT_SMALL,
                 tools=[SEARCH_TOOL],
                 tool_choice="auto",
@@ -107,7 +111,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
             try:
                 follow = chat_complete(
                     config,
-                    messages=chat_history,
+                    messages=_prep_history(chat_history),
                     model=ModelName.CHAT_SMALL,
                 )
             except Exception as e:
