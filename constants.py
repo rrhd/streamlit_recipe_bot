@@ -138,6 +138,7 @@ class MiscValues(StrEnum):
     HTTPS_PREFIX = "https://"
     DEFAULT_NA = "N/A"
     DEFAULT_STEP = "?"
+    CACHE_DIR = "recipe_cache"
 
 
 class ConfigKeys(StrEnum):
