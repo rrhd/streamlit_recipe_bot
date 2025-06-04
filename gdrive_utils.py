@@ -587,7 +587,7 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
 
         return [], {}
 
-    folder_id = st.secrets.get(GDriveKeys.SECRET_DRIVE, {}).get(GDriveKeys.FOLDER_ID)
+    folder_id = st.secrets.get(f"{GDriveKeys.SECRET_DRIVE}_{GDriveKeys.FOLDER_ID}")
     if not folder_id:
         log_with_payload(
             logging.ERROR, LogMsg.GDRIVE_FOLDER_ID_MISSING + f"({func_name})"
