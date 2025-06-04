@@ -1,6 +1,11 @@
 import os
 import tempfile
+from pathlib import Path
 from enum import StrEnum, IntEnum
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool, ToolTypes
+
+_PROMPT_DIR = Path(__file__).parent / "prompts"
 
 
 class FileExt(StrEnum):
@@ -513,11 +518,46 @@ class UserPrompt(StrEnum):
 
 class ModelName(StrEnum):
     VISION = "mistral-small-2503"
+    CHAT_SMALL = "mistral-small-latest"
+    CHAT_LARGE = "mistral-large-latest"
+    EMBED_BASE = "mistral-embed"
+
+
+class ToolText(StrEnum):
+    """Text for tool descriptions and parameters."""
+
+    SEARCH_DESC = "Search and rank recipes by keywords"
+    QUERY_DESC = "Keywords for searching recipes"
+    RANK_DESC = "Return a new ordering for the given recipes"
+    ORDER_PARAM = "New ordering of recipe numbers"
+
+
+class ToolCall(StrEnum):
+    SEARCH_RECIPES = "search_recipes"
+    RANK_RECIPES = "rank_recipes"
+
+
+class AgentText(StrEnum):
+    """Prompts for the chatbot and ranking agents."""
+
+    RERANK_SYSTEM = (_PROMPT_DIR / "rerank_system.md").read_text("utf-8")
+    RERANK_USER = (
+        "Given the user's intent '{query}', order the following recipe URLs by relevance."
+    )
+
+    CHATBOT_SYSTEM = (_PROMPT_DIR / "chatbot_system.md").read_text("utf-8")
+
+    PARSE_SYSTEM = (_PROMPT_DIR / "parse_system.md").read_text("utf-8")
+    PARSE_USER = "Request: {query}"
 
 
 class CacheLimit(IntEnum):
     MAX_TOKENS = 4096
     MAX_IMAGES = 8
+
+
+class SearchLimit(IntEnum):
+    RESULTS = 5
 
 
 class Suffix(StrEnum):

@@ -2,10 +2,11 @@ import logging
 from datetime import datetime
 
 import streamlit as st
+from mistralai.models import AssistantMessage, SystemMessage
 
 from cache_manager import fetch_db_last_updated
 from config import CONFIG
-from constants import FormatStrings, LogMsg
+from constants import FormatStrings, LogMsg, AgentText
 from db_utils import init_profile_db, fetch_sources_cached
 from gdrive_utils import download_essential_files, list_drive_books_cached
 from log_utils import ErrorPayload, log_with_payload
@@ -14,6 +15,7 @@ from ui_helpers import UiText
 from ui_pages.advanced_search import render_advanced_search_page
 from ui_pages.library import render_library_page
 from ui_pages.simple_search import render_simple_search_page
+from ui_pages.chatbot import render_chatbot_page
 
 st.set_page_config(layout="wide", page_title=UiText.PAGE_TITLE)
 
@@ -134,6 +136,9 @@ def initialize_session_state():
         SessionStateKeys.LOADED_RECIPE_COVERAGE: defaults.recipe_coverage * 100.0,
         SessionStateKeys.LOADED_SOURCES: default_sources,
         SessionStateKeys.PROFILE_STATUS_MESSAGE: defaults.profile_message,
+        SessionStateKeys.CHAT_HISTORY: [
+            SystemMessage(content=AgentText.CHATBOT_SYSTEM),
+        ],
     }
 
     for key, default_value in state_initializer.items():
@@ -149,6 +154,7 @@ page_options = [
     UiText.TAB_ADVANCED,
     UiText.TAB_SIMPLE,
     UiText.TAB_LIBRARY,
+    UiText.TAB_CHAT,
 ]
 
 st.sidebar.radio(
@@ -176,6 +182,12 @@ elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_SIMPLE:
 
 elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_LIBRARY:
     render_library_page(
+        st,
+        CONFIG,
+    )
+
+elif st.session_state[SessionStateKeys.SELECTED_PAGE] == UiText.TAB_CHAT:
+    render_chatbot_page(
         st,
         CONFIG,
     )

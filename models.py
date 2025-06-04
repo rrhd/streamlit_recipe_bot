@@ -39,3 +39,15 @@ class SaveProfileRequest(BaseModel):
 class LoadProfileRequest(BaseModel):
     username: str
     timestamp: str | None = None
+
+
+class RecipeSearchArgs(BaseModel):
+    """Arguments for the recipe search tool."""
+
+    query: str
+
+
+class RecipeRankArgs(BaseModel):
+    """Arguments returned by the ranking tool."""
+
+    order: list[int]
