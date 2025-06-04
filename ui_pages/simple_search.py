@@ -131,8 +131,8 @@ def render_simple_search_page(st: st, config: AppConfig) -> None:
                 recipe_content_dict = r.get(RecipeKeys.RECIPE, {})
 
                 simple_df_row = {
-                    "Recipe Title": title,
-                    "Source / URL": url,
+                    UiText.COLUMN_RECIPE_TITLE: title,
+                    UiText.COLUMN_SOURCE_URL: url,
                 }
                 simple_results_data_for_df.append(simple_df_row)
 
