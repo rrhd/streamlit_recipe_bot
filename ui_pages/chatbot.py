@@ -1,6 +1,7 @@
 import base64
 import json
 from typing import Any
+from types import ModuleType
 try:
     import streamlit as st
 except Exception:  # pragma: no cover - fallback for tests
@@ -20,7 +21,7 @@ from mistralai.models import (
 )
 
 from config import AppConfig
-from constants import ModelName, AgentText
+from constants import ModelName, AgentText, Role, ToolChoiceMode
 from chat_agent import SEARCH_TOOL, search_and_rerank
 from models import RecipeSearchArgs
 from session_state import SessionStateKeys
@@ -36,7 +37,7 @@ def _prep_history(history: list) -> list:
     return [history[0]] + history[first_user:]
 
 
-def render_chatbot_page(st: st, config: AppConfig) -> None:
+def render_chatbot_page(st: ModuleType, config: AppConfig) -> None:
     st.header(UiText.HEADER_CHAT)
     st.info(UiText.CHAT_ABOUT)
 
@@ -51,7 +52,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
         st.chat_message(msg.role).markdown(msg.content)
 
     if len(chat_history) == 1:
-        st.chat_message("assistant").markdown(UiText.CHAT_INIT_MESSAGE)
+        st.chat_message(Role.ASSISTANT).markdown(UiText.CHAT_INIT_MESSAGE)
 
     uploaded_files = st.file_uploader(
         UiText.CHAT_FILE_LABEL,
@@ -78,7 +79,7 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
                 messages=_prep_history(chat_history),
                 model=ModelName.CHAT_SMALL,
                 tools=[SEARCH_TOOL],
-                tool_choice="auto",
+                tool_choice=ToolChoiceMode.AUTO,
             )
         except Exception as e:
             st.error(f"Chat API error: {e}")

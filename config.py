@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
 from typing import Self
-import streamlit as st
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import streamlit as st
 
 from constants import (
     MiscValues,

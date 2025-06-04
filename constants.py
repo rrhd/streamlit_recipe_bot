@@ -510,6 +510,12 @@ class LogMsg(StrEnum):
 class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
+    ASSISTANT = "assistant"
+    TOOL = "tool"
+
+
+class ToolChoiceMode(StrEnum):
+    AUTO = "auto"
 
 
 class ContentType(StrEnum):
