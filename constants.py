@@ -495,6 +495,7 @@ class LogMsg(StrEnum):
         "Reset library selection as '{selection}' is no longer valid."
     )
 
+    CHAT_LARGE = "mistral-large-latest"
     RECIPE_SELECTION_CHANGED = (
         "Recipe selection changed via dropdown callback to: {selection}"
     )
