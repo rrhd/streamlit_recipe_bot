@@ -2,8 +2,13 @@ import os
 import tempfile
 from pathlib import Path
 from enum import StrEnum, IntEnum
-from mistralai.models.function import Function
-from mistralai.models.tool import Tool, ToolTypes
+try:
+    from mistralai.models.function import Function
+    from mistralai.models.tool import Tool, ToolTypes
+except Exception:  # pragma: no cover - fallback for missing package
+    from mistralai.models.function import Function
+    from mistralai.models.tool import Tool
+    ToolTypes = None
 
 _PROMPT_DIR = Path(__file__).parent / "prompts"
 

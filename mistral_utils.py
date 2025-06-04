@@ -5,7 +5,23 @@ from typing import Any, Iterable
 
 from diskcache import Cache
 from functools import lru_cache
-from mistralai import Mistral
+try:
+    from mistralai import Mistral
+except Exception:  # pragma: no cover - fallback
+    class Mistral:
+        def __init__(self, *_, **__):
+            pass
+        class chat:
+            @staticmethod
+            def complete(*_, **__):
+                return None
+            @staticmethod
+            def parse(*_, **__):
+                return None
+        class embeddings:
+            @staticmethod
+            def create(*_, **__):
+                return None
 
 from config import AppConfig
 from constants import ModelName

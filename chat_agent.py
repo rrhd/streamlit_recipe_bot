@@ -2,8 +2,16 @@ import logging
 from typing import Any
 
 import numpy as np
-from mistralai.models import SystemMessage, UserMessage
-from mistralai.models.toolchoice import ToolChoice
+try:
+    from mistralai.models import SystemMessage, UserMessage
+    from mistralai.models.toolchoice import ToolChoice
+    from mistralai.models.function import Function
+    from mistralai.models.tool import Tool
+except Exception:  # pragma: no cover - fallback
+    from mistralai.models import SystemMessage, UserMessage  # type: ignore
+    from mistralai.models.toolchoice import ToolChoice  # type: ignore
+    from mistralai.models.function import Function  # type: ignore
+    from mistralai.models.tool import Tool  # type: ignore
 from pydantic import BaseModel
 
 from config import AppConfig
@@ -14,8 +22,6 @@ from models import (
     RecipeRankArgs,
     strict_model_schema,
 )
-from mistralai.models.function import Function
-from mistralai.models.tool import Tool
 from query_top_k import query_top_k
 from mistral_utils import embeddings_create, chat_complete, chat_parse
 

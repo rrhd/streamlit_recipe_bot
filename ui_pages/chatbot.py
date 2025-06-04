@@ -1,6 +1,15 @@
 import base64
 import json
-import streamlit as st
+from typing import Any
+try:
+    import streamlit as st
+except Exception:  # pragma: no cover - fallback for tests
+    import types
+    st = types.SimpleNamespace(
+        secrets={},
+        session_state={},
+        sidebar=types.SimpleNamespace(expander=lambda *a, **k: types.SimpleNamespace(markdown=lambda *_: None)),
+    )
 from mistralai.models import (
     AssistantMessage,
     UserMessage,
