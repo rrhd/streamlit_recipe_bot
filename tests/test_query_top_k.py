@@ -84,7 +84,9 @@ def test_query_flank_steak_top_results():
         "https://www.americastestkitchen.com/recipes/9192-cast-iron-pan-seared-flank-steak-with-crispy-potatoes-and-chimichurri",
         "https://www.americastestkitchen.com/recipes/16181-ancho-rubbed-flank-steak-and-cilantro-rice-with-avocado-sauce",
     ]
-    results = run_query(user_ingredients=["flank steak"], min_ing_matches=1, top_n_db=10)
+    results = run_query(
+        user_ingredients=["flank steak"], min_ing_matches=1, top_n_db=10
+    )
     urls = [r["url"] for r in results[:3]]
     assert urls == expected_urls
 
@@ -93,6 +95,26 @@ def test_query_italian_beef_result():
     ingredients = ["boneless beef chuck-eye roast", "garlic clove"]
     results = run_query(user_ingredients=ingredients, min_ing_matches=2, top_n_db=5)
     assert results and results[0]["url"].endswith("chicago-italian-beef-sandwiches")
+
+
+@pytest.mark.parametrize(
+    "keywords",
+    [["gar"], ["cress"], ["team"]],
+)
+def test_keyword_no_partial_matches(keywords):
+    assert run_query(keywords=keywords) == []
+
+
+@pytest.mark.parametrize(
+    "ingredients, min_match, expect_any",
+    [
+        (["flank steak", "garlic clove"], 2, True),
+        (["flank steak", "broccoli"], 2, False),
+    ],
+)
+def test_multi_ingredient_query(ingredients, min_match, expect_any):
+    results = run_query(user_ingredients=ingredients, min_ing_matches=min_match)
+    assert (len(results) > 0) == expect_any
     ],
 )
 def test_keyword_combinations(keywords, expected_min):
