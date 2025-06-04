@@ -32,11 +32,15 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
     chat_history: list = st.session_state[SessionStateKeys.CHAT_HISTORY]
 
     for msg in chat_history:
-        role = msg.role if msg.role != "system" else "assistant"
-        st.chat_message(role).markdown(msg.content)
+        if isinstance(msg, SystemMessage):
+            continue
+        st.chat_message(msg.role).markdown(msg.content)
 
     uploaded_files = st.file_uploader(
-        "", type=["png", "jpg", "jpeg"], accept_multiple_files=True
+        UiText.CHAT_FILE_LABEL,
+        type=["png", "jpg", "jpeg"],
+        accept_multiple_files=True,
+        label_visibility="collapsed",
     )
     user_input = st.chat_input(UiText.CHAT_PLACEHOLDER)
 
@@ -90,8 +94,8 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
                 for r in results
             ]
             with st.sidebar.expander(UiText.EXPANDER_SEARCH_RESULTS, expanded=True):
-                for item in results_short:
-                    st.markdown(f"- [{item['title']}]({item['url']})")
+                for i, item in enumerate(results_short, 1):
+                    st.markdown(f"{i}. [{item['title']}]({item['url']})")
             tool_result = json.dumps(results_short)
             chat_history.append(
                 ToolMessage(tool_call_id=tool_call.id, content=tool_result)

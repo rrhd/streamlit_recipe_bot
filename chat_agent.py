@@ -4,14 +4,22 @@ from typing import Any
 
 import numpy as np
 from mistralai.models import SystemMessage, UserMessage
+from pydantic import BaseModel
 
 from config import AppConfig
 from constants import ModelName, ToolText, ToolCall, AgentText, SearchLimit, TagFilterMode
 from models import RecipeSearchArgs, RecipeRankArgs
 from mistralai.models.function import Function
-from mistralai.models.tool import Tool, ToolTypes
+from mistralai.models.tool import Tool
 from query_top_k import query_top_k
 from mistral_utils import embeddings_create, chat_complete
+
+
+class ToolChoice(BaseModel):
+    """Model for specifying a single tool choice."""
+
+    type: str = "function"
+    function: dict[str, str]
 
 
 RESULT_LIMIT = SearchLimit.RESULTS
@@ -85,7 +93,7 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
             messages=messages,
             model=ModelName.CHAT_SMALL,
             tools=[RANK_TOOL],
-            tool_choice=ToolCall.RANK_RECIPES,
+            tool_choice=ToolChoice(function={"name": ToolCall.RANK_RECIPES}),
             temperature=0.2,
         )
         ordered: list[dict[str, Any]] = []

@@ -112,5 +112,5 @@ def test_render_chatbot_page_flow(monkeypatch):
 
     history = st.session_state[SessionStateKeys.CHAT_HISTORY]
     assert history[-1].content == "done"
-    assert st.sidebar.expanders[-1].markdowns == ["- [R1](url1)"]
+    assert st.sidebar.expanders[-1].markdowns == ["1. [R1](url1)"]
 

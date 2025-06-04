@@ -178,6 +178,7 @@ class UiText(StrEnum):
         " You can describe a craving, list ingredients, or upload pictures, and the bot"
         " will find suitable recipes."
     )
+    CHAT_FILE_LABEL = "Upload images"
     HEADER_MISTRAL_DOCS = "Mistral Client Examples"
     MISTRAL_OVERVIEW = (
         "These examples showcase Mistral's ability to handle text, images, embeddings,"
