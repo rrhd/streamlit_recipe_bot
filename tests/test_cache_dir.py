@@ -10,7 +10,7 @@ sys.modules.setdefault("streamlit", SimpleNamespace(secrets={}))
 sys.path.insert(0, str(ROOT))
 os.environ["RECIPE_DB_PATH"] = str(ROOT / "data" / "test_recipes.db")
 
-from constants import MiscValues
+from constants import PathName
 from config import AppConfig
 import cache_manager
 from diskcache import Cache
@@ -25,12 +25,12 @@ def test_diskcache_string_none_creates_none_dir(tmp_path, monkeypatch):
         c.close()
 
 
-def test_default_cache_dir_uses_constant(monkeypatch):
+def test_default_cache_dir_uses_enum(monkeypatch):
     monkeypatch.delenv("CACHE_DIR", raising=False)
     cfg = AppConfig()
-    assert cfg.cache_dir == Path(MiscValues.CACHE_DIR)
+    assert cfg.cache_dir == Path(PathName.CACHE_DIR)
     cm = cache_manager.CacheManager(str(cfg.cache_dir))
     try:
-        assert Path(cm._cache.directory).name == MiscValues.CACHE_DIR
+        assert Path(cm._cache.directory).name == PathName.CACHE_DIR
     finally:
         cm.close()

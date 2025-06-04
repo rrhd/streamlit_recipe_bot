@@ -8,9 +8,8 @@ from constants import MiscValues
 
 import diskcache
 from models import QueryRequest, SimpleSearchRequest
-from query_top_k import (
-    get_db_connection as get_recipe_db_connection,
-)
+from query_top_k import get_db_connection as get_recipe_db_connection
+from constants import PathName, DefaultDate
 
 
 def fetch_db_last_updated() -> datetime:
@@ -21,7 +20,7 @@ def fetch_db_last_updated() -> datetime:
     conn.close()
 
     if not row or not row[0]:
-        return datetime(2000, 1, 1)
+        return datetime.fromisoformat(DefaultDate.DB_MISSING)
 
     return datetime.fromisoformat(row[0])
 
@@ -29,7 +28,7 @@ def fetch_db_last_updated() -> datetime:
 class CacheManager:
     """Manages a persistent disk cache and invalidates on DB updates."""
 
-    def __init__(self, cache_dir: str = MiscValues.CACHE_DIR) -> None:
+    def __init__(self, cache_dir: str = PathName.CACHE_DIR) -> None:
         """
         Initializes the disk cache.
 

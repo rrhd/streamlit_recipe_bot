@@ -526,5 +526,16 @@ class CacheLimit(IntEnum):
 class Suffix(StrEnum):
     ELLIPSIS = "…"
 
-PROJECT_DIR = Path(__file__).resolve().parent
-SPACY_MODEL = PROJECT_DIR / "taste_model/model-best"
+
+class PathName(StrEnum):
+    RECIPE_DB = "recipe_links.db"
+    CACHE_DIR = "recipe_cache"
+    SPACY_MODEL = "taste_model/model-best"
+
+
+class NumericDefault(IntEnum):
+    DEDUP_THRESHOLD = 95
+
+
+class DefaultDate(StrEnum):
+    DB_MISSING = "2000-01-01"
