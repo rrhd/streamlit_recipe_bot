@@ -274,6 +274,7 @@ class LogMsg(StrEnum):
     CONFIG_VALIDATION_INVALID_STR = "Dependent fields for {field} are not valid strings"
     CONFIG_INVALID_DEFAULT_MODE = "Invalid default TagFilterMode: {mode}"
     CONFIG_LOAD_FAIL = "CRITICAL: Failed to load AppConfig: {error}"
+    CONFIG_SECRETS_LOAD_FAIL = "Unable to access Streamlit secrets: {error}"
 
     EBOOK_CONVERT_REQ = "Request to ensure PDF format for: {source_path}"
     EBOOK_CONVERT_SRC_NOT_FOUND = (

@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from typing import Self
 import streamlit as st
@@ -278,7 +279,8 @@ def _load_config() -> AppConfig:
     env_values = {k.lower(): v for k, v in os.environ.items()}
     try:
         secrets = dict(st.secrets)
-    except Exception:
+    except Exception as exc:  # pragma: no cover - not in Streamlit
+        logging.info(LogMsg.CONFIG_SECRETS_LOAD_FAIL.value, extra={"error": exc})
         secrets = {}
     return AppConfig(**secrets, **env_values)
 
