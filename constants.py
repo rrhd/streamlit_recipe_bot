@@ -1,6 +1,7 @@
 import os
 import tempfile
 from enum import StrEnum, IntEnum
+from pathlib import Path
 
 
 class FileExt(StrEnum):
@@ -542,3 +543,6 @@ class CacheLimit(IntEnum):
 
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+# Project directory
+PROJECT_DIR = Path(__file__).resolve().parent

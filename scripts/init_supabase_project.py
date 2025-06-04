@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from enum import StrEnum
 
-from constants import SupabaseEnv
+from constants import SupabaseEnv, PROJECT_DIR
 
 
 class ApiEndpoint(StrEnum):
@@ -40,7 +40,7 @@ class SetupConfig(BaseModel):
 
     @classmethod
     def load(cls) -> "SetupConfig":
-        path = Path(SecretDefaults.SECRETS_PATH)
+        path = PROJECT_DIR / SecretDefaults.SECRETS_PATH
         data = toml.loads(path.read_text()) if path.exists() else {}
         token = data.get("supabase_access_token", "")
         org_id = data.get("supabase_org_id")
@@ -128,7 +128,7 @@ def main() -> None:
     org_id = _get_org_id(cfg)
     logging.info("Using organization %s", org_id)
     proj = _create_project(cfg, org_id)
-    ref = proj["ref"]
+    ref = proj.get("ref") or proj["id"]
     logging.info("Created project %s", ref)
 
     # Wait until project is ready (~10 min max)
