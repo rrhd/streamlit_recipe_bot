@@ -25,7 +25,15 @@ logging.basicConfig(
 
 
 def get_db_connection():
-    return sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE)
+    conn.create_function(
+        "REGEXP",
+        2,
+        lambda pattern, text: 1
+        if text is not None and re.search(pattern, text, re.IGNORECASE)
+        else 0,
+    )
+    return conn
 
 
 def normalize_ingredient_name(text: str) -> str:
@@ -215,39 +223,41 @@ def build_candidate_urls(
 
     if keywords_to_include:
         for kw in keywords_to_include:
+            pattern = rf"\b{re.escape(kw)}\b"
             incl_clause = (
                 "("
-                " s.title LIKE ? COLLATE NOCASE"
-                "  OR s.description LIKE ? COLLATE NOCASE"
+                " REGEXP(?, s.title)"
+                "  OR REGEXP(?, s.description)"
                 "  OR EXISTS("
                 "     SELECT 1 FROM recipe_ingredients i2"
                 "     WHERE i2.url=s.url"
-                "       AND i2.normalized_ingredient LIKE ? COLLATE NOCASE"
+                "       AND REGEXP(?, i2.normalized_ingredient)"
                 "  )"
                 ")"
             )
             where_parts.append(incl_clause)
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
+            final_params.append(pattern)
+            final_params.append(pattern)
+            final_params.append(pattern)
 
     if keywords_to_exclude:
         for kw in keywords_to_exclude:
+            pattern = rf"\b{re.escape(kw)}\b"
             excl_clause = (
                 "NOT ("
-                " s.title LIKE ? COLLATE NOCASE"
-                "  OR s.description LIKE ? COLLATE NOCASE"
+                " REGEXP(?, s.title)"
+                "  OR REGEXP(?, s.description)"
                 "  OR EXISTS("
                 "     SELECT 1 FROM recipe_ingredients i2"
                 "     WHERE i2.url=s.url"
-                "       AND i2.normalized_ingredient LIKE ? COLLATE NOCASE"
+                "       AND REGEXP(?, i2.normalized_ingredient)"
                 "  )"
                 ")"
             )
             where_parts.append(excl_clause)
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
+            final_params.append(pattern)
+            final_params.append(pattern)
+            final_params.append(pattern)
 
     if where_parts:
         sql += " WHERE " + " AND ".join(where_parts)
