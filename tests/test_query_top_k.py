@@ -117,6 +117,24 @@ def test_multi_ingredient_query(ingredients, min_match, expect_any):
     assert (len(results) > 0) == expect_any
     ],
 )
+
+
+def test_many_ingredients_match():
+    ingredients = [
+        "Chinese black vinegar",
+        "Chinese wheat noodle",
+        "Shaoxing wine",
+        "Sichuan peppercorn",
+        "baby bok choy",
+        "chili crisp",
+        "garlic clove",
+        "grated fresh ginger",
+        "ground pork",
+        "scallion",
+        "soy sauce",
+    ]
+    results = run_query(user_ingredients=ingredients, min_ing_matches=10, top_n_db=10)
+    assert results and results[0]["url"].endswith("chili-crisp-noodles")
 def test_keyword_combinations(keywords, expected_min):
     results = run_query(keywords=keywords)
     if expected_min == 0:
