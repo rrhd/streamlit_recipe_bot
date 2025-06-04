@@ -1,6 +1,3 @@
-from __future__ import annotations
-
-import json
 import logging
 import os
 import time
@@ -33,8 +30,8 @@ class SecretDefaults(str):
 
 
 class SetupConfig(BaseModel):
-    access_token: str = Field(default_factory=lambda: os.getenv(SupabaseEnv.ACCESS_TOKEN.value, ""))
-    org_id: str | None = Field(default_factory=lambda: os.getenv(SupabaseEnv.ORG_ID.value))
+    access_token: str = Field(default_factory=lambda: os.getenv(SupabaseEnv.ACCESS_TOKEN, ""))
+    org_id: str | None = Field(default_factory=lambda: os.getenv(SupabaseEnv.ORG_ID))
     project_name: str = Field(default=SecretDefaults.PROJECT_NAME)
     region: str = Field(default=SecretDefaults.REGION)
     db_password: str = Field(default=SecretDefaults.DB_PASSWORD)
