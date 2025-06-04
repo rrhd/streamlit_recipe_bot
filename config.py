@@ -273,8 +273,14 @@ class AppConfig(BaseSettings):
         return self
 
 
-_env_lower = {k.lower(): v for k, v in os.environ.items()}
-try:
-    CONFIG = AppConfig(**dict(st.secrets), **_env_lower)
-except Exception:
-    CONFIG = AppConfig(**_env_lower)
+def _load_config() -> AppConfig:
+    """Load configuration from Streamlit secrets or environment vars."""
+    env_values = {k.lower(): v for k, v in os.environ.items()}
+    try:
+        secrets = dict(st.secrets)
+    except Exception:
+        secrets = {}
+    return AppConfig(**secrets, **env_values)
+
+
+CONFIG = _load_config()
