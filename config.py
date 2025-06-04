@@ -11,7 +11,9 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix,
+    LogMsg,
+    ModelName,
+    Suffix,
 )
 
 
@@ -44,6 +46,7 @@ class LogConfig(BaseModel):
 
 class AppConfig(BaseSettings):
     """Application configuration settings."""
+
     api_key: str | None = Field(
         default=None,
     )
@@ -271,4 +274,8 @@ class AppConfig(BaseSettings):
 
 
 _env_lower = {k.lower(): v for k, v in os.environ.items()}
-CONFIG = AppConfig(**st.secrets, **_env_lower)
+try:
+    _secrets = dict(st.secrets)
+except Exception:
+    _secrets = {}
+CONFIG = AppConfig(**_secrets, **_env_lower)
