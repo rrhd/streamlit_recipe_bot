@@ -280,7 +280,9 @@ def _load_config() -> AppConfig:
     try:
         secrets = dict(st.secrets)
     except Exception as exc:  # pragma: no cover - not in Streamlit
-        logging.info(LogMsg.CONFIG_SECRETS_LOAD_FAIL.value, extra={"error": exc})
+        logging.info(
+            LogMsg.CONFIG_SECRETS_LOAD_FAIL.value.format(error=exc),
+        )
         secrets = {}
     return AppConfig(**secrets, **env_values)
 

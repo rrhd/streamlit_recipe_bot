@@ -8,6 +8,7 @@ from supabase import create_client
 
 from config import CONFIG
 from constants import DbKeys, LogMsg
+from log_utils import ErrorPayload, log_with_payload
 
 
 @pytest.fixture(scope="module")
@@ -24,8 +25,14 @@ def main() -> None:
         client.table("user_profiles").select("*").limit(1).execute()
         logging.info("Supabase API reachable")
     except Exception as e:  # pragma: no cover - network error handling
-        logging.error(LogMsg.PROFILE_DB_CONNECTION_FAILED.value, exc_info=True)
-        logging.error("Failed Supabase API check: %s", e)
+        err_payload = ErrorPayload(error_message=str(e))
+        log_with_payload(
+            logging.ERROR,
+            LogMsg.PROFILE_DB_CONNECTION_FAILED,
+            payload=err_payload,
+            error=str(e),
+            exc_info=True,
+        )
 
 def test_supabase_api_reachable(supabase_client: object) -> None:
     supabase_client.table(DbKeys.TABLE_USER_PROFILES).select("*").limit(1).execute()

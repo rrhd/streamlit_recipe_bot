@@ -8,6 +8,7 @@ from supabase import create_client
 
 from config import CONFIG
 from constants import DbKeys, LogMsg
+from log_utils import ErrorPayload, log_with_payload
 
 
 def main() -> None:
@@ -18,8 +19,14 @@ def main() -> None:
         client.table(DbKeys.TABLE_USER_PROFILES).select("*").limit(1).execute()
         logging.info("Supabase API reachable")
     except Exception as exc:  # pragma: no cover - network error handling
-        logging.error(LogMsg.PROFILE_DB_CONNECTION_FAILED.value, exc_info=True)
-        logging.error("Failed Supabase API check: %s", exc)
+        err_payload = ErrorPayload(error_message=str(exc))
+        log_with_payload(
+            logging.ERROR,
+            LogMsg.PROFILE_DB_CONNECTION_FAILED,
+            payload=err_payload,
+            error=str(exc),
+            exc_info=True,
+        )
 
     try:
         with psycopg2.connect(CONFIG.supabase_db_url) as conn:
@@ -27,8 +34,14 @@ def main() -> None:
                 cur.execute("SELECT 1")
                 logging.info("Postgres connection successful")
     except Exception as exc:  # pragma: no cover - network error handling
-        logging.error(LogMsg.PROFILE_DB_INIT_FAIL.value, exc_info=True)
-        logging.error("Failed Postgres connection: %s", exc)
+        err_payload = ErrorPayload(error_message=str(exc))
+        log_with_payload(
+            logging.ERROR,
+            LogMsg.PROFILE_DB_INIT_FAIL,
+            payload=err_payload,
+            error=str(exc),
+            exc_info=True,
+        )
 
 
 if __name__ == "__main__":
