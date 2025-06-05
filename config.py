@@ -275,4 +275,7 @@ try:
     secrets_dict = dict(st.secrets)
 except Exception:
     secrets_dict = {}
-CONFIG = AppConfig(**secrets_dict, **_env_lower)
+
+# dedup the keys, with secrets taking precedence
+_env_lower.update({k.lower(): v for k, v in secrets_dict.items()})
+CONFIG = AppConfig.model_validate(_env_lower)
