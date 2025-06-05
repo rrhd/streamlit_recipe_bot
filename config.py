@@ -284,7 +284,8 @@ def _load_config() -> AppConfig:
             LogMsg.CONFIG_SECRETS_LOAD_FAIL.value.format(error=exc),
         )
         secrets = {}
-    return AppConfig(**secrets, **env_values)
+    merged = {**secrets, **env_values}
+    return AppConfig(**merged)
 
 
 CONFIG = _load_config()

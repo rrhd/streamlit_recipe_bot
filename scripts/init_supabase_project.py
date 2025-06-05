@@ -43,15 +43,20 @@ class SetupConfig(BaseModel):
     def load(cls) -> "SetupConfig":
         path = PROJECT_DIR / SecretDefaults.SECRETS_PATH
         data = toml.loads(path.read_text()) if path.exists() else {}
+
+        def _env(name: str) -> str | None:
+            return os.getenv(name) or os.getenv(name.lower())
+
         token = (
-            os.getenv(SupabaseEnv.ACCESS_TOKEN.value)
-            or os.getenv(SupabaseEnv.ALT_ACCESS_TOKEN.value)
-            or os.getenv(SupabaseEnv.API_KEY.value)
+            _env(SupabaseEnv.ALT_ACCESS_TOKEN.value)
+            or _env(SupabaseEnv.ACCESS_TOKEN.value)
+            or _env(SupabaseEnv.API_KEY.value)
             or data.get("supabase_access_token")
             or data.get("supa_base_api_key")
             or data.get("supabase_api_key", "")
         )
-        org_id = os.getenv(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
+
+        org_id = _env(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
         return cls(access_token=token, org_id=org_id, secrets_path=path)
 
 
@@ -86,7 +91,24 @@ def _create_project(cfg: SetupConfig, org_id: str) -> dict:
         "region": cfg.region,
         "plan": "free",
     }
-    resp = requests.post(ApiEndpoint.BASE + ApiEndpoint.PROJECTS, headers=_headers(cfg.access_token), json=payload, timeout=30)
+    resp = requests.post(
+        ApiEndpoint.BASE + ApiEndpoint.PROJECTS,
+        headers=_headers(cfg.access_token),
+        json=payload,
+        timeout=30,
+    )
+    if resp.status_code == 400 and "already exists" in resp.text:
+        # Fetch existing project with same name
+        projects = requests.get(
+            ApiEndpoint.BASE + ApiEndpoint.PROJECTS,
+            headers=_headers(cfg.access_token),
+            timeout=30,
+        )
+        projects.raise_for_status()
+        for project in projects.json():
+            if project.get("name") == cfg.project_name:
+                return project
+        resp.raise_for_status()
     resp.raise_for_status()
     return resp.json()
 
@@ -105,7 +127,7 @@ def _get_service_role_key(cfg: SetupConfig, ref: str) -> str:
     keys = resp.json()
     for item in keys:
         if item.get("name") == "service_role":
-            return item["secret"]
+            return item["api_key"]
     raise RuntimeError("service_role key not found")
 
 
@@ -120,10 +142,10 @@ def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
             "supabase_url": info.supabase_url,
             "supabase_api_key": info.supabase_api_key,
             "supabase_db_url": info.supabase_db_url,
-            "download_dest_dir": SecretDefaults.DOWNLOAD_DEST_DIR,
-            "book_dir_relative": SecretDefaults.BOOK_DIR_RELATIVE,
-            "profile_db_path": SecretDefaults.PROFILE_DB_PATH,
-            "recipe_db_filename": SecretDefaults.RECIPE_DB_FILENAME,
+            "download_dest_dir": SecretDefaults.DOWNLOAD_DEST_DIR.value,
+            "book_dir_relative": SecretDefaults.BOOK_DIR_RELATIVE.value,
+            "profile_db_path": SecretDefaults.PROFILE_DB_PATH.value,
+            "recipe_db_filename": SecretDefaults.RECIPE_DB_FILENAME.value,
         }
     )
     cfg.secrets_path.write_text(toml.dumps(data))
@@ -147,14 +169,14 @@ def main() -> None:
     # Wait until project is ready (~10 min max)
     for _ in range(40):
         details = _get_project_details(cfg, ref)
-        if details.get("status") == "ACTIVE":
+        if details.get("status") in {"ACTIVE", "ACTIVE_HEALTHY", "ONLINE"}:
             break
         time.sleep(15)
     else:
         raise RuntimeError("Project did not become active")
 
     key = _get_service_role_key(cfg, ref)
-    db_url = _get_project_details(cfg, ref)["db_url"]
+    db_url = f"postgresql://postgres:{cfg.db_password}@db.{ref}.supabase.co:5432/postgres"
     info = ProjectInfo(
         supabase_url=f"https://{ref}.supabase.co",
         supabase_api_key=key,
