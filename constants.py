@@ -183,6 +183,17 @@ class SupabaseEnv(StrEnum):
     ORG_ID = "SUPABASE_ORG_ID"
 
 
+class SupabaseMgmtEndpoint(StrEnum):
+    """Management API endpoints."""
+
+    BASE = "https://api.supabase.com"
+    ORGS = "/v1/organizations"
+    PROJECTS = "/v1/projects"
+    PROJECT = "/v1/projects/{ref}"
+    API_KEYS = "/v1/projects/{ref}/api-keys"
+    DB_EXECUTE = "/v1/projects/{ref}/db/execute"
+
+
 class DbKeys(StrEnum):
     """Keys related to database operations."""
 

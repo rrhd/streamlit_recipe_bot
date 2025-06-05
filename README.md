@@ -17,7 +17,9 @@ Scripts in the `scripts/` directory help initialize and migrate the profile data
    python scripts/init_supabase_project.py
    ```
 
-2. Upload existing profiles to the new instance:
+2. Upload existing profiles to the new instance. The migration script will
+   create the `user_profiles` table via Postgres or the Management API if direct
+   connections fail:
 
    ```bash
    PYTHONPATH=. python scripts/setup_supabase.py

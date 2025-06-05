@@ -9,15 +9,9 @@ from pydantic import BaseModel, Field
 
 from enum import StrEnum
 
-from constants import ConfigKeys, SupabaseEnv, PROJECT_DIR
+from constants import ConfigKeys, SupabaseEnv, SupabaseMgmtEndpoint, PROJECT_DIR
 
 
-class ApiEndpoint(StrEnum):
-    BASE = "https://api.supabase.com"
-    ORGS = "/v1/organizations"
-    PROJECTS = "/v1/projects"
-    PROJECT = "/v1/projects/{ref}"
-    API_KEYS = "/v1/projects/{ref}/api-keys"
 
 
 class SecretDefaults(StrEnum):
@@ -77,7 +71,7 @@ def _headers(token: str) -> dict[str, str]:
 def _get_org_id(cfg: SetupConfig) -> str:
     if cfg.org_id:
         return cfg.org_id
-    resp = requests.get(ApiEndpoint.BASE + ApiEndpoint.ORGS, headers=_headers(cfg.access_token), timeout=30)
+    resp = requests.get(SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.ORGS, headers=_headers(cfg.access_token), timeout=30)
     resp.raise_for_status()
     orgs = resp.json()
     return orgs[0]["id"]
@@ -92,7 +86,7 @@ def _create_project(cfg: SetupConfig, org_id: str) -> dict:
         "plan": "free",
     }
     resp = requests.post(
-        ApiEndpoint.BASE + ApiEndpoint.PROJECTS,
+        SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.PROJECTS,
         headers=_headers(cfg.access_token),
         json=payload,
         timeout=30,
@@ -100,7 +94,7 @@ def _create_project(cfg: SetupConfig, org_id: str) -> dict:
     if resp.status_code == 400 and "already exists" in resp.text:
         # Fetch existing project with same name
         projects = requests.get(
-            ApiEndpoint.BASE + ApiEndpoint.PROJECTS,
+            SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.PROJECTS,
             headers=_headers(cfg.access_token),
             timeout=30,
         )
@@ -114,14 +108,14 @@ def _create_project(cfg: SetupConfig, org_id: str) -> dict:
 
 
 def _get_project_details(cfg: SetupConfig, ref: str) -> dict:
-    url = ApiEndpoint.BASE + ApiEndpoint.PROJECT.format(ref=ref)
+    url = SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.PROJECT.format(ref=ref)
     resp = requests.get(url, headers=_headers(cfg.access_token), timeout=30)
     resp.raise_for_status()
     return resp.json()
 
 
 def _get_service_role_key(cfg: SetupConfig, ref: str) -> str:
-    url = ApiEndpoint.BASE + ApiEndpoint.API_KEYS.format(ref=ref)
+    url = SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.API_KEYS.format(ref=ref)
     resp = requests.get(url, headers=_headers(cfg.access_token), timeout=30)
     resp.raise_for_status()
     keys = resp.json()
