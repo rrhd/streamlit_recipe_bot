@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+HELP_MD = Path(__file__).parent / "help.md"
 from enum import StrEnum, IntEnum, Enum
 from mistralai.models.function import Function
 from mistralai.models.tool import Tool, ToolTypes

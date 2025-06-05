@@ -5,7 +5,7 @@ from typing import Any
 
 from streamlit.components import v1 as components
 
-from constants import RecipeKeys, MiscValues, LogMsg
+from constants import RecipeKeys, MiscValues, LogMsg, HELP_MD
 from log_utils import ErrorPayload, log_with_payload
 
 
@@ -26,6 +26,7 @@ class UiText(StrEnum):
     TAB_SIMPLE = "Simple Search"
     TAB_LIBRARY = "Library"
     TAB_CHAT = "Chatbot"
+    TAB_HELP = "Help"
     SIDEBAR_PAGE_SELECT = "Select Page"
     ABOUT_MARKDOWN = """
         # Recipe Finder
@@ -177,6 +178,8 @@ class UiText(StrEnum):
         " You can describe a craving, list ingredients, or upload pictures, and the bot"
         " will find suitable recipes."
     )
+    HEADER_HELP = "Help & Setup"
+    HELP_MARKDOWN = HELP_MD.read_text("utf-8")
     CHAT_FILE_LABEL = "Upload images"
     TOOL_ARGS_INVALID = "I couldn't understand that search request."
     EXPANDER_SEARCH_RESULTS = "Search Results"
