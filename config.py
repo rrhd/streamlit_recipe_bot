@@ -62,6 +62,12 @@ class AppConfig(BaseSettings):
     download_dest_dir: str = Field(default=ConfigKeys.DOWNLOAD_DEST_DIR)
     recipe_db_filename: str = Field(default=ConfigKeys.RECIPE_DB_FILENAME)
 
+    supabase_url: str | None = Field(default=None)
+    supabase_api_key: str | None = Field(default=None)
+    supabase_db_url: str | None = Field(default=None)
+    supabase_access_token: str | None = Field(default=None)
+    supabase_org_id: str | None = Field(default=None)
+
     defaults: DefaultValues = Field(default_factory=DefaultValues)
 
     book_dir: str | None = Field(default=None)
@@ -239,7 +245,8 @@ class AppConfig(BaseSettings):
             profile_db_name = os.path.basename(self.profile_db_path)
             recipe_db_name = self.recipe_db_filename
             essentials = set(self.essential_filenames or [])
-            essentials.add(profile_db_name)
+            if not self.supabase_url:
+                essentials.add(profile_db_name)
             essentials.add(recipe_db_name)
             self.essential_filenames = list(essentials)
         else:
@@ -263,4 +270,9 @@ class AppConfig(BaseSettings):
         return self
 
 
-CONFIG = AppConfig(**st.secrets)
+_env_lower = {k.lower(): v for k, v in os.environ.items()}
+try:
+    secrets_dict = dict(st.secrets)
+except Exception:
+    secrets_dict = {}
+CONFIG = AppConfig(**secrets_dict, **_env_lower)
