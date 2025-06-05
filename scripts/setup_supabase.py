@@ -41,9 +41,9 @@ def create_table_if_missing(cfg: MigrationConfig) -> None:
         token = CONFIG.supabase_access_token or cfg.supabase_key
         sql = DbKeys.SQL_CREATE_PROFILES_PG.strip()
         resp = requests.post(
-            SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.DB_EXECUTE.format(ref=ref),
+            SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.DB_EXECUTE,
             headers=_headers(token),
-            json={"query": sql},
+            json={"project_ref": ref, "query": sql},
             timeout=30,
         )
         resp.raise_for_status()

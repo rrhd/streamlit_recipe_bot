@@ -274,5 +274,5 @@ class AppConfig(BaseSettings):
         return self
 
 
-_env_lower = {k.lower(): v for k, v in os.environ.items()}
+    merged = {**env_values, **secrets}
 CONFIG = AppConfig(**{**dict(st.secrets), **_env_lower})

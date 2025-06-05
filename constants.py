@@ -191,7 +191,7 @@ class SupabaseMgmtEndpoint(StrEnum):
     PROJECTS = "/v1/projects"
     PROJECT = "/v1/projects/{ref}"
     API_KEYS = "/v1/projects/{ref}/api-keys"
-    DB_EXECUTE = "/v1/projects/{ref}/db/execute"
+    DB_EXECUTE = "/v1/query"
 
 
 class DbKeys(StrEnum):
