@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Self
 
-import toml
+import tomllib
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import streamlit as st
@@ -13,7 +13,10 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix, PROJECT_DIR,
+    LogMsg,
+    ModelName,
+    Suffix,
+    PROJECT_DIR,
 )
 
 
@@ -46,12 +49,13 @@ class LogConfig(BaseModel):
 
 class AppConfig(BaseSettings):
     """Application configuration settings."""
+
     api_key: str | None = Field(
         default=None,
     )
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
-    cache_dir: Path | None = Field(default=None)
+    cache_dir: Path = Field(default=PROJECT_DIR / "cache")
     max_log_length: int = 200
     truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(
@@ -63,6 +67,10 @@ class AppConfig(BaseSettings):
     temp_dir: str = Field(default=MiscValues.TEMP_DIR)
     download_dest_dir: str = Field(default=ConfigKeys.DOWNLOAD_DEST_DIR)
     recipe_db_filename: str = Field(default=ConfigKeys.RECIPE_DB_FILENAME)
+    recipe_db: Path = Field(default=PROJECT_DIR / "data" / "recipe_links.db")
+    spacy_model: Path = Field(default=PROJECT_DIR / "taste_model/model-best")
+    concurrency_limit: int = Field(default=5)
+    dedup_threshold: int = Field(default=95)
 
     defaults: DefaultValues = Field(default_factory=DefaultValues)
 
@@ -268,5 +276,6 @@ class AppConfig(BaseSettings):
 try:
     CONFIG = AppConfig(**st.secrets)
 except Exception:
-    secrets = toml.load(PROJECT_DIR / ".streamlit" / "secrets.toml")
+    with open(PROJECT_DIR / ".streamlit" / "secrets.toml", "rb") as fh:
+        secrets = tomllib.load(fh)
     CONFIG = AppConfig(**secrets)

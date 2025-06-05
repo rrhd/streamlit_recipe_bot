@@ -547,9 +547,7 @@ class AgentText(StrEnum):
     """Prompts for the chatbot and ranking agents."""
 
     RERANK_SYSTEM = (_PROMPT_DIR / "rerank_system.md").read_text("utf-8")
-    RERANK_USER = (
-        "Given the user's intent '{query}', order the following recipe URLs by relevance."
-    )
+    RERANK_USER = "Given the user's intent '{query}', order the following recipe URLs by relevance."
 
     CHATBOT_SYSTEM = (_PROMPT_DIR / "chatbot_system.md").read_text("utf-8")
 
@@ -571,23 +569,3 @@ class Suffix(StrEnum):
 
 
 PROJECT_DIR = Path(__file__).parent
-
-
-class PathName(Enum):
-    RECIPE_DB = PROJECT_DIR / "data" / "recipe_links.db"
-    CACHE_DIR = PROJECT_DIR / "cache"
-
-
-SPACY_MODEL = PROJECT_DIR / "taste_model/model-best"
-
-
-class NumericDefault(IntEnum):
-    DEDUP_THRESHOLD = 95
-
-
-class NumericLimit(IntEnum):
-    CONCURRENCY = 5
-
-
-class DefaultDate(StrEnum):
-    DB_MISSING = "2000-01-01"

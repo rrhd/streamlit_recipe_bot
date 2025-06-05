@@ -1,8 +1,8 @@
 import spacy
 
-from constants import SPACY_MODEL
+from config import CONFIG
 
-nlp = spacy.load(SPACY_MODEL)
+nlp = spacy.load(CONFIG.spacy_model)
 
 from enum import Enum
 
