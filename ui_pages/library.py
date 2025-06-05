@@ -5,6 +5,7 @@ import subprocess
 
 import streamlit as st
 from streamlit.components import v1 as components
+from types import ModuleType
 
 from config import AppConfig
 from ebook_utils import to_pdf_cached
@@ -15,7 +16,7 @@ from constants import GDriveKeys, LogMsg
 from ui_helpers import UiText
 
 
-def render_library_page(st: st, config: AppConfig) -> None:
+def render_library_page(st: ModuleType, config: AppConfig) -> None:
     def on_book_select():
         """Streamlit callback: download + convert the newly-selected book with a spinner."""
         label = st.session_state[SessionStateKeys.LIBRARY_BOOK_SELECTOR]

@@ -3,6 +3,7 @@ import logging
 
 import pandas as pd
 import streamlit as st
+from types import ModuleType
 
 from config import AppConfig
 from constants import MiscValues, RecipeKeys, FormatStrings, TagFilterMode, LogMsg
@@ -12,7 +13,7 @@ from session_state import SessionStateKeys
 from ui_helpers import UiText, display_recipe_markdown
 
 
-def render_simple_search_page(st: st, config: AppConfig) -> None:
+def render_simple_search_page(st: ModuleType, config: AppConfig) -> None:
     st.header(UiText.HEADER_SIMPLE_SEARCH)
     defaults = config.defaults
 

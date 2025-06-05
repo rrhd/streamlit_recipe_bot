@@ -1,6 +1,8 @@
 import spacy
 
-nlp = spacy.load("taste_model/model-best")
+from config import CONFIG
+
+nlp = spacy.load(CONFIG.spacy_model)
 
 from enum import Enum
 

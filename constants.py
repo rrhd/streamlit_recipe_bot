@@ -1,14 +1,9 @@
 import os
 import tempfile
 from pathlib import Path
-from enum import StrEnum, IntEnum
-try:
-    from mistralai.models.function import Function
-    from mistralai.models.tool import Tool, ToolTypes
-except Exception:  # pragma: no cover - fallback for missing package
-    from mistralai.models.function import Function
-    from mistralai.models.tool import Tool
-    ToolTypes = None
+from enum import StrEnum, IntEnum, Enum
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool, ToolTypes
 
 _PROMPT_DIR = Path(__file__).parent / "prompts"
 
@@ -510,6 +505,12 @@ class LogMsg(StrEnum):
 class Role(StrEnum):
     SYSTEM = "system"
     USER = "user"
+    ASSISTANT = "assistant"
+    TOOL = "tool"
+
+
+class ToolChoiceMode(StrEnum):
+    AUTO = "auto"
 
 
 class ContentType(StrEnum):
@@ -546,9 +547,7 @@ class AgentText(StrEnum):
     """Prompts for the chatbot and ranking agents."""
 
     RERANK_SYSTEM = (_PROMPT_DIR / "rerank_system.md").read_text("utf-8")
-    RERANK_USER = (
-        "Given the user's intent '{query}', order the following recipe URLs by relevance."
-    )
+    RERANK_USER = "Given the user's intent '{query}', order the following recipe URLs by relevance."
 
     CHATBOT_SYSTEM = (_PROMPT_DIR / "chatbot_system.md").read_text("utf-8")
 
@@ -567,3 +566,6 @@ class SearchLimit(IntEnum):
 
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+
+PROJECT_DIR = Path(__file__).parent

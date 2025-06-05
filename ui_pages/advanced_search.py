@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pandas as pd
 import streamlit as st
+from types import ModuleType
 
 from cache_manager import fetch_db_last_updated
 from config import AppConfig
@@ -26,7 +27,7 @@ from ui_helpers import UiText, display_recipe_markdown
 
 
 def render_advanced_search_page(
-    st: st.session_state, config: AppConfig, default_tag_filter_mode_enum: TagFilterMode
+    st: ModuleType, config: AppConfig, default_tag_filter_mode_enum: TagFilterMode
 ) -> None:
     st.header(UiText.HEADER_ADVANCED_SEARCH)
 
