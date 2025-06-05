@@ -44,10 +44,8 @@ class SetupConfig(BaseModel):
         token = (
             _env(SupabaseEnv.ALT_ACCESS_TOKEN.value)
             or _env(SupabaseEnv.ACCESS_TOKEN.value)
-            or _env(SupabaseEnv.API_KEY.value)
             or data.get("supabase_access_token")
             or data.get("supa_base_api_key")
-            or data.get("supabase_api_key", "")
         )
 
         org_id = _env(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
