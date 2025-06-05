@@ -1,14 +1,18 @@
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
 import psycopg2
 import pytest
 from supabase import create_client
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+load_dotenv()
+
 from config import CONFIG
 from constants import DbKeys
+from scripts.setup_supabase import MigrationConfig, create_table_if_missing
 
 
 @pytest.fixture(scope="module")
@@ -17,6 +21,9 @@ def supabase_client() -> object:
         pytest.skip("Supabase credentials not configured")
     try:
         client = create_client(CONFIG.supabase_url, CONFIG.supabase_api_key)
+        if CONFIG.supabase_db_url:
+            cfg = MigrationConfig()
+            create_table_if_missing(cfg)
         client.table(DbKeys.TABLE_USER_PROFILES).select("id").limit(1).execute()
         return client
     except Exception as exc:  # pragma: no cover - network error handling
