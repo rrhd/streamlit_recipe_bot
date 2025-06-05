@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from enum import StrEnum
 
-from constants import SupabaseEnv, PROJECT_DIR
+from constants import ConfigKeys, SupabaseEnv, PROJECT_DIR
 
 
 class ApiEndpoint(StrEnum):
@@ -23,8 +23,8 @@ class ApiEndpoint(StrEnum):
 class SecretDefaults(StrEnum):
     DOWNLOAD_DEST_DIR = "data"
     BOOK_DIR_RELATIVE = "data/books"
-    PROFILE_DB_PATH = "data/profiles_db.sqlite"
-    RECIPE_DB_FILENAME = "data/recipe_links.db"
+    PROFILE_DB_PATH = ConfigKeys.PROFILE_DB_PATH
+    RECIPE_DB_FILENAME = ConfigKeys.RECIPE_DB_FILENAME
     SECRETS_PATH = ".streamlit/secrets.toml"
     PROJECT_NAME = "streamlit_recipe_bot"
     REGION = "us-east-1"
@@ -60,7 +60,11 @@ class ProjectInfo(BaseModel):
 
 
 def _headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    return {
+        "Authorization": f"Bearer {token}",
+        "apikey": token,
+        "Content-Type": "application/json",
+    }
 
 
 def _get_org_id(cfg: SetupConfig) -> str:
@@ -104,6 +108,7 @@ def _get_service_role_key(cfg: SetupConfig, ref: str) -> str:
 
 
 def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
+    cfg.secrets_path.parent.mkdir(parents=True, exist_ok=True)
     if cfg.secrets_path.exists():
         data = toml.loads(cfg.secrets_path.read_text())
     else:
