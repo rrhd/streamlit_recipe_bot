@@ -11,9 +11,6 @@ class FileExt(StrEnum):
     PDF = ".pdf"
     EPUB = ".epub"
     MOBI = ".mobi"
-    DB = ".db"
-    SQLITE = ".sqlite"
-    TXT = ".txt"
 
 
 class FileMode(StrEnum):
@@ -23,24 +20,6 @@ class FileMode(StrEnum):
     WRITE_BINARY = "wb"
 
 
-class DefaultKeys(StrEnum):
-    """Keys for Pydantic default values."""
-
-    INGREDIENTS_TEXT = "ingredients_text"
-    MUST_USE_TEXT = "must_use_text"
-    EXCLUDED_TEXT = "excluded_text"
-    KEYWORDS_INCLUDE = "keywords_include"
-    KEYWORDS_EXCLUDE = "keywords_exclude"
-    MIN_ING_MATCHES = "min_ing_matches"
-    MAX_STEPS = "max_steps"
-    USER_COVERAGE = "user_coverage"
-    RECIPE_COVERAGE = "recipe_coverage"
-    TAG_FILTER_MODE = "tag_filter_mode"
-    USERNAME = "username"
-    SIMPLE_QUERY = "simple_query"
-    PROFILE_MESSAGE = "profile_message"
-    NO_RECIPES_FOUND = "no_recipes_found"
-    LOADING_MESSAGE = "loading_message"
 
 
 class CategoryKeys(StrEnum):
@@ -88,43 +67,10 @@ class FormatStrings(StrEnum):
     SLIDER_PERCENT = "%.0f%%"
     RECIPE_LABEL = "{coverage:.3f} - {title}"
     RECIPE_LABEL_DUPLICATE = "{original_label} ({count})"
-    PDF_DATA_URI = "data:application/pdf;base64,{base64_pdf}"
     BYTES_UNDECODABLE = "<Bytes length={length}, undecodable>"
     TRUNCATION_SUFFIX = "..."
 
 
-class HtmlClasses(StrEnum):
-    """CSS classes used in generated HTML."""
-
-    RECIPE_CONTAINER = "recipe-container"
-    RECIPE_TITLE = "recipe-title"
-    RECIPE_SECTION = "recipe-section"
-    RECIPE_INGREDIENTS = "recipe-ingredients"
-    RECIPE_INSTRUCTIONS = "recipe-instructions"
-    RECIPE_SOURCE = "recipe-source"
-
-
-class HtmlTags(StrEnum):
-    """HTML tags."""
-
-    H2 = "h2"
-    H3 = "h3"
-    P = "p"
-    UL = "ul"
-    OL = "ol"
-    LI = "li"
-    DIV = "div"
-    A = "a"
-    STRONG = "strong"
-    TABLE = "table"
-    THEAD = "thead"
-    TBODY = "tbody"
-    TR = "tr"
-    TH = "th"
-    TD = "td"
-    STYLE = "style"
-    SMALL = "small"
-    BR = "br"
 
 
 class MiscValues(StrEnum):
@@ -136,7 +82,6 @@ class MiscValues(StrEnum):
     EMPTY = ""
     HTTP_PREFIX = "http://"
     HTTPS_PREFIX = "https://"
-    DEFAULT_NA = "N/A"
     DEFAULT_STEP = "?"
     CACHE_DIR = "recipe_cache"
 

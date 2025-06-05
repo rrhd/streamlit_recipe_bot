@@ -32,14 +32,12 @@ class DefaultValues(BaseModel):
     simple_query: str = Field(default="")
     profile_message: str = Field(default="<p></p>")
     no_recipes_found: str = Field(default="No recipes found.")
-    loading_message: str = Field(default="<p>Loading...</p>")
 
 
 class LogConfig(BaseModel):
     """Configuration for logging."""
 
     truncate_length: int = Field(default=500)
-    default_payload_value: str = Field(default="<Not Provided>")
 
 
 class AppConfig(BaseSettings):
@@ -50,9 +48,6 @@ class AppConfig(BaseSettings):
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
     cache_dir: Path = Field(default_factory=lambda: Path(PathName.CACHE_DIR))
-    spacy_model_path: Path = Field(
-        default=Path(PathName.SPACY_MODEL)
-    )
     max_log_length: int = 200
     truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(
@@ -69,7 +64,6 @@ class AppConfig(BaseSettings):
 
     book_dir: str | None = Field(default=None)
     full_profile_db_path: str | None = Field(default=None)
-    full_recipe_db_path: str | None = Field(default=None)
 
     essential_filenames: list[str] | None = Field(default=None)
 
@@ -231,9 +225,6 @@ class AppConfig(BaseSettings):
         ):
             self.full_profile_db_path = os.path.join(
                 self.download_dest_dir, self.profile_db_path
-            )
-            self.full_recipe_db_path = os.path.join(
-                self.download_dest_dir, PathName.RECIPE_DB
             )
         else:
             raise ValueError(

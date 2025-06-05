@@ -7,7 +7,6 @@ from typing import Any
 from constants import MiscValues
 
 import diskcache
-from models import QueryRequest, SimpleSearchRequest
 from query_top_k import get_db_connection as get_recipe_db_connection
 from constants import PathName, DefaultDate
 
@@ -57,30 +56,6 @@ class CacheManager:
             self._cache.clear()
             self._last_db_update = current_db_time
 
-    def build_query_key(self, req: QueryRequest) -> str:
-        """
-        Builds a cache key for a QueryRequest.
-
-        Args:
-            req: A QueryRequest object.
-
-        Returns:
-            A string representing the cache key.
-        """
-
-        return str(req.model_dump())
-
-    def build_simple_search_key(self, req: SimpleSearchRequest) -> str:
-        """
-        Builds a cache key for a SimpleSearchRequest.
-
-        Args:
-            req: A SimpleSearchRequest object.
-
-        Returns:
-            A string representing the cache key.
-        """
-        return f"simple_search::{req.query.strip().lower()}"
 
     def get(self, key: str) -> Any | None:
         """
