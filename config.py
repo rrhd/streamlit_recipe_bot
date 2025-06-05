@@ -271,4 +271,4 @@ class AppConfig(BaseSettings):
 
 
 _env_lower = {k.lower(): v for k, v in os.environ.items()}
-CONFIG = AppConfig(**st.secrets, **_env_lower)
+CONFIG = AppConfig(**{**dict(st.secrets), **_env_lower})
