@@ -2,6 +2,7 @@ import logging
 import time
 from pathlib import Path
 
+import os
 import requests
 import toml
 from pydantic import BaseModel, Field
@@ -42,8 +43,10 @@ class SetupConfig(BaseModel):
     def load(cls) -> "SetupConfig":
         path = PROJECT_DIR / SecretDefaults.SECRETS_PATH
         data = toml.loads(path.read_text()) if path.exists() else {}
-        token = data.get("supabase_access_token", "")
-        org_id = data.get("supabase_org_id")
+        token = os.getenv(SupabaseEnv.ACCESS_TOKEN.value) or data.get(
+            "supabase_access_token", ""
+        )
+        org_id = os.getenv(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
         return cls(access_token=token, org_id=org_id, secrets_path=path)
 
 

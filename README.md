@@ -30,6 +30,6 @@ Scripts in the `scripts/` directory help initialize and migrate the profile data
    ```
 
 The scripts read Supabase credentials from `.streamlit/secrets.toml`. If that
-file is missing you can instead supply `SUPABASE_ACCESS_TOKEN`,
-`SUPABASE_URL`, `SUPABASE_API_KEY`, and `SUPABASE_DB_URL` as environment
-variables.
+file is missing you can instead supply environment variables with the same
+names: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_API_KEY`,
+`SUPABASE_DB_URL`, and `SUPABASE_ORG_ID`.
