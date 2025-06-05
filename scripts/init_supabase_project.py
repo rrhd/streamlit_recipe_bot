@@ -6,17 +6,17 @@ import os
 import requests
 import toml
 from pydantic import BaseModel, Field
-
 from enum import StrEnum
-
 from constants import ConfigKeys, SupabaseEnv, SupabaseMgmtEndpoint, PROJECT_DIR
 
 
 
 
-class SecretDefaults(StrEnum):
-    DOWNLOAD_DEST_DIR = "data"
-    BOOK_DIR_RELATIVE = "data/books"
+
+
+class SecretDefaults(str):
+    DOWNLOAD_DEST_DIR = "/absolute/path/for/cache_and_databases"
+    BOOK_DIR_RELATIVE = "books"
     PROFILE_DB_PATH = ConfigKeys.PROFILE_DB_PATH
     RECIPE_DB_FILENAME = ConfigKeys.RECIPE_DB_FILENAME
     SECRETS_PATH = ".streamlit/secrets.toml"
@@ -136,12 +136,13 @@ def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
             "supabase_url": info.supabase_url,
             "supabase_api_key": info.supabase_api_key,
             "supabase_db_url": info.supabase_db_url,
-            "download_dest_dir": SecretDefaults.DOWNLOAD_DEST_DIR.value,
-            "book_dir_relative": SecretDefaults.BOOK_DIR_RELATIVE.value,
-            "profile_db_path": SecretDefaults.PROFILE_DB_PATH.value,
-            "recipe_db_filename": SecretDefaults.RECIPE_DB_FILENAME.value,
+            "download_dest_dir": SecretDefaults.DOWNLOAD_DEST_DIR,
+            "book_dir_relative": SecretDefaults.BOOK_DIR_RELATIVE,
+            "profile_db_path": Path(SecretDefaults.PROFILE_DB_PATH).name,
+            "recipe_db_filename": Path(SecretDefaults.RECIPE_DB_FILENAME).name,
         }
     )
+    cfg.secrets_path.parent.mkdir(parents=True, exist_ok=True)
     cfg.secrets_path.write_text(toml.dumps(data))
 
 

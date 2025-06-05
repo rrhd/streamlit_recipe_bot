@@ -274,18 +274,5 @@ class AppConfig(BaseSettings):
         return self
 
 
-def _load_config() -> AppConfig:
-    """Load configuration from Streamlit secrets or environment vars."""
-    env_values = {k.lower(): v for k, v in os.environ.items()}
-    try:
-        secrets = dict(st.secrets)
-    except Exception as exc:  # pragma: no cover - not in Streamlit
-        logging.info(
-            LogMsg.CONFIG_SECRETS_LOAD_FAIL.value.format(error=exc),
-        )
-        secrets = {}
-    merged = {**secrets, **env_values}
-    return AppConfig(**merged)
-
-
-CONFIG = _load_config()
+_env_lower = {k.lower(): v for k, v in os.environ.items()}
+CONFIG = AppConfig(**{**dict(st.secrets), **_env_lower})
