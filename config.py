@@ -275,6 +275,7 @@ class AppConfig(BaseSettings):
 
 try:
     CONFIG = AppConfig(**st.secrets)
+    assert CONFIG.api_key
 except Exception:
     with open(PROJECT_DIR / ".streamlit" / "secrets.toml", "rb") as fh:
         secrets = tomllib.load(fh)
