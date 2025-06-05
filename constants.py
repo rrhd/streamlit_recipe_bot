@@ -144,8 +144,8 @@ class ConfigKeys(StrEnum):
 
     PROFILE_DB_PATH = "profiles_db.sqlite"
     BOOK_DIR_RELATIVE = "cookbooks"
-    DOWNLOAD_DEST_DIR = "data"
-    RECIPE_DB_FILENAME = "recipe_links.db.gz"
+    DOWNLOAD_DEST_DIR = "."
+    RECIPE_DB_FILENAME = "recipe_links.db"
 
 
 class TagFilterMode(StrEnum):
