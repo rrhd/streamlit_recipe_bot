@@ -218,8 +218,8 @@ def render_advanced_search_page(
                 df_row = {
                     "User Coverage": f"{user_cov:.1%}",
                     "Recipe Coverage": f"{recipe_cov:.1%}",
-                    "Source / URL": url,
-                    "Recipe Title": title,
+                    UiText.COLUMN_SOURCE_URL: url,
+                    UiText.COLUMN_RECIPE_TITLE: title,
                 }
                 results_data_for_df.append(df_row)
 
