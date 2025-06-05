@@ -43,8 +43,11 @@ class SetupConfig(BaseModel):
     def load(cls) -> "SetupConfig":
         path = PROJECT_DIR / SecretDefaults.SECRETS_PATH
         data = toml.loads(path.read_text()) if path.exists() else {}
-        token = os.getenv(SupabaseEnv.ACCESS_TOKEN.value) or data.get(
-            "supabase_access_token", ""
+        token = (
+            os.getenv(SupabaseEnv.ACCESS_TOKEN.value)
+            or os.getenv(SupabaseEnv.API_KEY.value)
+            or data.get("supabase_access_token")
+            or data.get("supabase_api_key", "")
         )
         org_id = os.getenv(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
         return cls(access_token=token, org_id=org_id, secrets_path=path)
