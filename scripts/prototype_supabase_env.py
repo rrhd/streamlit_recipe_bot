@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 
 import psycopg2
-from pydantic import BaseSettings, Field
-from pydantic_settings import SettingsConfigDict
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from supabase import create_client
 
 from constants import DbKeys, SupabaseEnv, LogMsg
