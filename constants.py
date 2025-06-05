@@ -181,6 +181,14 @@ class SupabaseEnv(StrEnum):
     ORG_ID = "SUPABASE_ORG_ID"
 
 
+class SupabaseHeader(StrEnum):
+    """HTTP header names used for Supabase API requests."""
+
+    AUTHORIZATION = "Authorization"
+    API_KEY = "apikey"
+    CONTENT_TYPE = "Content-Type"
+
+
 class DbKeys(StrEnum):
     """Keys related to database operations."""
 
