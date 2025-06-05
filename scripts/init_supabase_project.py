@@ -7,7 +7,7 @@ import requests
 import toml
 from pydantic import BaseModel, Field
 
-from constants import SupabaseEnv
+from constants import ConfigKeys, SupabaseEnv
 
 
 class ApiEndpoint(str):
@@ -21,8 +21,8 @@ class ApiEndpoint(str):
 class SecretDefaults(str):
     DOWNLOAD_DEST_DIR = "/absolute/path/for/cache_and_databases"
     BOOK_DIR_RELATIVE = "books"
-    PROFILE_DB_PATH = "database/profiles.db"
-    RECIPE_DB_FILENAME = "recipes.db"
+    PROFILE_DB_PATH = ConfigKeys.PROFILE_DB_PATH
+    RECIPE_DB_FILENAME = ConfigKeys.RECIPE_DB_FILENAME
     SECRETS_PATH = ".streamlit/secrets.toml"
     PROJECT_NAME = "recipe-bot"
     REGION = "us-east-1"
@@ -100,10 +100,11 @@ def _write_secrets(info: ProjectInfo, cfg: SetupConfig) -> None:
             "supabase_db_url": info.supabase_db_url,
             "download_dest_dir": SecretDefaults.DOWNLOAD_DEST_DIR,
             "book_dir_relative": SecretDefaults.BOOK_DIR_RELATIVE,
-            "profile_db_path": SecretDefaults.PROFILE_DB_PATH,
-            "recipe_db_filename": SecretDefaults.RECIPE_DB_FILENAME,
+            "profile_db_path": Path(SecretDefaults.PROFILE_DB_PATH).name,
+            "recipe_db_filename": Path(SecretDefaults.RECIPE_DB_FILENAME).name,
         }
     )
+    cfg.secrets_path.parent.mkdir(parents=True, exist_ok=True)
     cfg.secrets_path.write_text(toml.dumps(data))
 
 
