@@ -16,9 +16,6 @@ class FileExt(StrEnum):
     PDF = ".pdf"
     EPUB = ".epub"
     MOBI = ".mobi"
-    DB = ".db"
-    SQLITE = ".sqlite"
-    TXT = ".txt"
 
 
 class FileMode(StrEnum):
@@ -126,6 +123,16 @@ class GDriveKeys(StrEnum):
     FILE_MD5 = "md5Checksum"
 
 
+class SupabaseEnv(StrEnum):
+    """Environment variable keys for Supabase configuration."""
+
+    URL = "SUPABASE_URL"
+    API_KEY = "SUPABASE_API_KEY"
+    DB_URL = "SUPABASE_DB_URL"
+    ACCESS_TOKEN = "SUPABASE_ACCESS_TOKEN"
+    ORG_ID = "SUPABASE_ORG_ID"
+
+
 class DbKeys(StrEnum):
     """Keys related to database operations."""
 
@@ -141,6 +148,14 @@ class DbKeys(StrEnum):
             timestamp TEXT NOT NULL,
             payload_base64 TEXT NOT NULL
         )
+        """
+    SQL_CREATE_PROFILES_PG = """
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            payload_base64 TEXT NOT NULL
+        );
         """
     SQL_INSERT_PROFILE = """
         INSERT INTO user_profiles (username, timestamp, payload_base64)

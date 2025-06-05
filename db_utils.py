@@ -2,14 +2,17 @@ import base64
 import json
 import logging
 import os
-import sqlite3
 from datetime import datetime
 from typing import Any
+
+import sqlite3
+
+import psycopg2
+from supabase import Client, create_client
 
 import streamlit as st
 
 from constants import FormatStrings, DbKeys, ProfileDataKeys, LogMsg
-from gdrive_utils import download_essential_files, _upload_file_to_drive
 from log_utils import (
     DbPayload,
     ProfilePayload,
@@ -23,47 +26,20 @@ from ui_helpers import UiText
 
 
 @st.cache_resource
-def get_profile_db_connection() -> sqlite3.Connection | None:
-    """Gets a connection to the profiles SQLite database."""
-    db_path = CONFIG.full_profile_db_path
-    db_payload = DbPayload(db_path=db_path)
+def get_profile_db_connection() -> Client | None:
+    """Returns a Supabase client for the profiles table."""
+    if not CONFIG.supabase_url or not CONFIG.supabase_api_key:
+        st.error(UiText.ERROR_PROFILE_DB_CONNECT_FAILED.format(error="Missing Supabase config"))
+        return None
 
-    if not db_path or not os.path.exists(db_path):
-        st.error(UiText.ERROR_PROFILE_DB_PATH_MISSING + f" Path: {db_path}")
-        log_with_payload(
-            logging.ERROR,
-            LogMsg.PROFILE_DB_PATH_INVALID,
-            payload=db_payload,
-            db_path=str(db_path),
-        )
-
-        log_with_payload(
-            logging.WARNING, LogMsg.PROFILE_DB_MISSING_RETRY, payload=db_payload
-        )
-        download_essential_files()
-
-        if not db_path or not os.path.exists(db_path):
-            st.error(
-                f"Profile database still not found at '{db_path}' after download attempt."
-            )
-            return None
-        else:
-            log_with_payload(
-                logging.INFO, LogMsg.PROFILE_DB_FOUND_AFTER_RETRY, payload=db_payload
-            )
-
-    log_with_payload(
-        logging.INFO, LogMsg.PROFILE_DB_CONNECTING, payload=db_payload, db_path=db_path
-    )
     try:
-        return sqlite3.connect(db_path, check_same_thread=False)
-    except sqlite3.Error as e:
+        return create_client(CONFIG.supabase_url, CONFIG.supabase_api_key)
+    except Exception as e:  # pragma: no cover - network error handling
         err_payload = ErrorPayload(error_message=str(e))
         log_with_payload(
             logging.ERROR,
             LogMsg.PROFILE_DB_CONNECTION_FAILED,
             payload=err_payload,
-            db_payload=db_payload,
             error=str(e),
             exc_info=True,
         )
@@ -72,30 +48,23 @@ def get_profile_db_connection() -> sqlite3.Connection | None:
 
 
 def init_profile_db() -> None:
-    """Creates the user_profiles table if it doesn't exist."""
-    conn = get_profile_db_connection()
-    db_path = CONFIG.full_profile_db_path or "Unknown"
-    db_payload = DbPayload(db_path=db_path)
-
-    if not conn:
-        st.error(UiText.ERROR_PROFILE_DB_INIT.format(error="No DB connection"))
-        log_with_payload(
-            logging.ERROR, LogMsg.PROFILE_DB_INIT_FAIL_NO_CONN, payload=db_payload
-        )
+    """Creates the user_profiles table on Supabase if it doesn't exist."""
+    if not CONFIG.supabase_db_url:
+        st.error(UiText.ERROR_PROFILE_DB_INIT.format(error="No Supabase DB URL"))
         return
+
     try:
-        conn.execute(DbKeys.SQL_CREATE_PROFILES)
-        conn.commit()
-        log_with_payload(
-            logging.INFO, LogMsg.PROFILE_DB_INIT_SUCCESS, payload=db_payload
-        )
-    except sqlite3.Error as e:
+        with psycopg2.connect(CONFIG.supabase_db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(DbKeys.SQL_CREATE_PROFILES_PG)
+                conn.commit()
+        log_with_payload(logging.INFO, LogMsg.PROFILE_DB_INIT_SUCCESS)
+    except Exception as e:  # pragma: no cover - network error handling
         err_payload = ErrorPayload(error_message=str(e))
         log_with_payload(
             logging.ERROR,
             LogMsg.PROFILE_DB_INIT_FAIL,
             payload=err_payload,
-            db_payload=db_payload,
             error=str(e),
             exc_info=True,
         )
@@ -114,24 +83,21 @@ def save_profile(username: str, options_base64: str) -> str:
         timestamp=timestamp,
     )
 
-    conn = get_profile_db_connection()
-    if not conn:
+    client = get_profile_db_connection()
+    if not client:
         log_with_payload(
             logging.ERROR, LogMsg.PROFILE_DB_CONN_UNAVAILABLE_SAVE, payload=payload
         )
         raise ConnectionError(UiText.ERROR_PROFILE_DB_CONN_MISSING_SAVE)
 
     try:
-        cur = conn.cursor()
-        cur.execute(
-            DbKeys.SQL_INSERT_PROFILE,
-            (username, timestamp, options_base64),
-        )
-        conn.commit()
-        drive_folder = st.secrets["google_drive"]["folder_id"]
-        _upload_file_to_drive(
-            CONFIG.full_profile_db_path, drive_folder, "application/x-sqlite3"
-        )
+        client.table(DbKeys.TABLE_USER_PROFILES).insert(
+            {
+                DbKeys.COL_USERNAME: username,
+                DbKeys.COL_TIMESTAMP: timestamp,
+                DbKeys.COL_PAYLOAD: options_base64,
+            }
+        ).execute()
         log_with_payload(
             logging.INFO,
             LogMsg.PROFILE_DB_SAVE_SUCCESS,
@@ -139,7 +105,7 @@ def save_profile(username: str, options_base64: str) -> str:
             username=username,
         )
         return timestamp
-    except sqlite3.Error as e:
+    except Exception as e:  # pragma: no cover - network error handling
         err_payload = ErrorPayload(error_message=str(e))
         log_with_payload(
             logging.ERROR,
@@ -160,8 +126,8 @@ def load_profile(username: str) -> dict[str, Any] | None:
         logging.INFO, LogMsg.PROFILE_DB_LOAD_ATTEMPT, payload=payload, username=username
     )
 
-    conn = get_profile_db_connection()
-    if not conn:
+    client = get_profile_db_connection()
+    if not client:
         log_with_payload(
             logging.ERROR, LogMsg.PROFILE_DB_CONN_UNAVAILABLE_LOAD, payload=payload
         )
@@ -169,11 +135,15 @@ def load_profile(username: str) -> dict[str, Any] | None:
         return None
 
     try:
-        cur = conn.cursor()
-        row = cur.execute(
-            DbKeys.SQL_SELECT_PROFILE,
-            (username,),
-        ).fetchone()
+        resp = (
+            client.table(DbKeys.TABLE_USER_PROFILES)
+            .select("*")
+            .eq(DbKeys.COL_USERNAME, username)
+            .order(DbKeys.COL_TIMESTAMP, desc=True)
+            .limit(1)
+            .execute()
+        )
+        row = resp.data[0] if resp.data else None
 
         if not row:
             log_with_payload(
@@ -184,7 +154,8 @@ def load_profile(username: str) -> dict[str, Any] | None:
             )
             return None
 
-        payload_b64, actual_ts = row
+        payload_b64 = row.get(DbKeys.COL_PAYLOAD)
+        actual_ts = row.get(DbKeys.COL_TIMESTAMP)
         payload.timestamp = actual_ts
         try:
             decoded_bytes = base64.b64decode(payload_b64)
@@ -222,7 +193,7 @@ def load_profile(username: str) -> dict[str, Any] | None:
             st.error(UiText.ERROR_PROFILE_DECODE.format(username=username))
             return None
 
-    except sqlite3.Error as e:
+    except Exception as e:  # pragma: no cover - network error handling
         err_payload = ErrorPayload(error_message=str(e))
         log_with_payload(
             logging.ERROR,
