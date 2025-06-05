@@ -45,7 +45,11 @@ class ProjectInfo(BaseModel):
 
 
 def _headers(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}", "apikey": token, "Content-Type": "application/json"}
+    return {
+        "Authorization": f"Bearer {token}",
+        "apikey": token,
+        "Content-Type": "application/json",
+    }
 
 
 def _get_org_id(cfg: SetupConfig) -> str:
