@@ -9,7 +9,7 @@ from supabase import Client, create_client
 
 from config import CONFIG
 from constants import DbKeys
-
+BATCH_SIZE = 500
 
 class MigrationConfig(BaseModel):
     local_db: Path = Field(default_factory=lambda: Path(CONFIG.full_profile_db_path).resolve().absolute())
@@ -56,48 +56,60 @@ def create_table_if_missing(cfg: MigrationConfig) -> None:
 
 
 def migrate_profiles(cfg: MigrationConfig, client: Client) -> None:
-    """Migrate profiles from local SQLite to Supabase."""
+    """Bulk-upsert profiles from local SQLite to Supabase in batches."""
     if not cfg.local_db.exists():
         logging.warning("Local DB %s not found", cfg.local_db)
         return
 
     with sqlite3.connect(cfg.local_db) as conn:
         rows = conn.execute(
-            f"SELECT {DbKeys.COL_USERNAME}, {DbKeys.COL_TIMESTAMP}, {DbKeys.COL_PAYLOAD} FROM {DbKeys.TABLE_USER_PROFILES}"
+            f"SELECT {DbKeys.COL_USERNAME}, {DbKeys.COL_TIMESTAMP}, {DbKeys.COL_PAYLOAD} "
+            f"FROM {DbKeys.TABLE_USER_PROFILES}"
         ).fetchall()
 
-    # Strict deduplication on both fields
-    unique_keys = set()
-    deduped = []
-    for r in rows:
-        key = (r[0], r[1])
-        if key not in unique_keys:
-            unique_keys.add(key)
-            deduped.append(r)
-    rows = deduped
-
-    if not rows:
+    # deduplicate on (username, timestamp)
+    seen: set[tuple] = set()
+    deduped = [r for r in rows if not (r[0], r[1]) in seen and not seen.add((r[0], r[1]))]
+    if not deduped:
         logging.info("No profiles to migrate from %s", cfg.local_db)
         return
 
-    # Process one record at a time to avoid batch conflicts
-    for i, row in enumerate(rows):
+    # chunked bulk-upsert
+    for start in range(0, len(deduped), BATCH_SIZE):
+        batch = deduped[start : start + BATCH_SIZE]
+        payload = [
+            {
+                DbKeys.COL_USERNAME: r[0],
+                DbKeys.COL_TIMESTAMP: r[1],
+                DbKeys.COL_PAYLOAD: r[2],
+            }
+            for r in batch
+        ]
         try:
             client.table(DbKeys.TABLE_USER_PROFILES).upsert(
-                {
-                    DbKeys.COL_USERNAME: row[0],
-                    DbKeys.COL_TIMESTAMP: row[1],
-                    DbKeys.COL_PAYLOAD: row[2],
-                },
-                on_conflict=f"{DbKeys.COL_USERNAME},{DbKeys.COL_TIMESTAMP}"
+                payload,
+                on_conflict=f"{DbKeys.COL_USERNAME},{DbKeys.COL_TIMESTAMP}",
+                returning="minimal",
             ).execute()
-            if i % 100 == 0:
-                logging.info("Processed %s records", i)
         except APIError as e:
-            logging.error("Failed record %s: %s", row[0], e)
-            continue
+            # fallback to per-row upsert on failure
+            for r in batch:
+                try:
+                    client.table(DbKeys.TABLE_USER_PROFILES).upsert(
+                        {
+                            DbKeys.COL_USERNAME: r[0],
+                            DbKeys.COL_TIMESTAMP: r[1],
+                            DbKeys.COL_PAYLOAD: r[2],
+                        },
+                        on_conflict=f"{DbKeys.COL_USERNAME},{DbKeys.COL_TIMESTAMP}",
+                        returning="minimal",
+                    ).execute()
+                except APIError as ie:
+                    logging.error("Failed record %s: %s", r[0], ie)
+        else:
+            logging.info("Upserted rows %s–%s", start, start + len(batch) - 1)
 
-    logging.info("Completed migration of %s profiles", len(rows))
+    logging.info("Completed migration of %s profiles", len(deduped))
 def main() -> None:
     cfg = MigrationConfig()
     client = create_client(cfg.supabase_url, cfg.supabase_key)
