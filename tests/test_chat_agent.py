@@ -1,17 +1,6 @@
 import json
 from types import SimpleNamespace
 
-import pytest
-import streamlit as st
-
-st.secrets._secrets = {}
-
-import sys
-from types import ModuleType, SimpleNamespace
-
-dummy = ModuleType('query_top_k')
-dummy.query_top_k = lambda **kwargs: []
-sys.modules['query_top_k'] = dummy
 
 
 from config import AppConfig
@@ -54,12 +43,14 @@ def test_search_and_rerank_uses_llm_order(monkeypatch):
         lambda **kwargs: sample_results,
     )
 
-    monkeypatch.setattr(
-        "chat_agent.chat_parse",
-        lambda *a, **k: SimpleNamespace(
-            choices=[SimpleNamespace(message=SimpleNamespace(parsed=chat_agent.QueryRequest()))]
-        ),
-    )
+    def fake_chat_parse(*a, **k):
+        if k.get("response_format") is chat_agent.QueryRequest:
+            msg = SimpleNamespace(parsed=chat_agent.QueryRequest())
+        else:
+            msg = SimpleNamespace(parsed=chat_agent.RecipeRankResponse(new_order=[2, 0, 1]))
+        return SimpleNamespace(choices=[SimpleNamespace(message=msg)])
+
+    monkeypatch.setattr("chat_agent.chat_parse", fake_chat_parse)
 
     def fake_embeddings_create(*args, **kwargs):
         return DummyEmbedResp(
@@ -72,9 +63,7 @@ def test_search_and_rerank_uses_llm_order(monkeypatch):
         )
 
     monkeypatch.setattr("chat_agent.embeddings_create", fake_embeddings_create)
-    monkeypatch.setattr(
-        "chat_agent.chat_complete", lambda *a, **k: DummyChatResp([3, 1, 2])
-    )
+    # chat_complete no longer used
 
     ordered = search_and_rerank("chicken", cfg, ["s1"])
     assert [r["title"] for r in ordered] == ["B", "C", "A"]

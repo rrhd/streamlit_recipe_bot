@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 from typing import Self
+
+import toml
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import streamlit as st
@@ -11,7 +13,7 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix,
+    LogMsg, ModelName, Suffix, PROJECT_DIR,
 )
 
 
@@ -263,4 +265,8 @@ class AppConfig(BaseSettings):
         return self
 
 
-CONFIG = AppConfig(**st.secrets)
+try:
+    CONFIG = AppConfig(**st.secrets)
+except Exception:
+    secrets = toml.load(PROJECT_DIR / ".streamlit" / "secrets.toml")
+    CONFIG = AppConfig(**secrets)

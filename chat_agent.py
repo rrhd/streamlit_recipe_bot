@@ -21,6 +21,7 @@ from models import (
     RecipeSearchArgs,
     RecipeRankArgs,
     strict_model_schema,
+    RecipeRankResponse,
 )
 from query_top_k import query_top_k
 from mistral_utils import embeddings_create, chat_complete, chat_parse
@@ -54,17 +55,13 @@ def _parse_query(query: str, cfg: AppConfig, sources: list[str]) -> QueryRequest
         SystemMessage(content=AgentText.PARSE_SYSTEM),
         UserMessage(content=AgentText.PARSE_USER.format(query=query)),
     ]
-    try:
-        resp = chat_parse(
-            cfg,
-            messages=messages,
-            model=ModelName.CHAT_SMALL,
-            response_format=QueryRequest,
-        )
-        args: QueryRequest = resp.choices[0].message.parsed
-    except Exception as e:
-        logging.error("Query parsing failed: %s", e)
-        args = QueryRequest(keywords_to_include=query.split())
+    resp = chat_parse(
+        cfg,
+        messages=messages,
+        model=ModelName.CHAT_LARGE,
+        response_format=QueryRequest,
+    )
+    args: QueryRequest = resp.choices[0].message.parsed
     if not args.sources:
         args.sources = sources
     return args
@@ -79,12 +76,7 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
         return []
 
     titles = [query] + [r.get("title", "") for r in results]
-    try:
-        resp = embeddings_create(config, inputs=titles, model=ModelName.EMBED_BASE)
-    except Exception as e:
-        logging.error("Embedding request failed: %s", e)
-        return results[:RESULT_LIMIT]
-
+    resp = embeddings_create(config, inputs=titles, model=ModelName.EMBED_BASE)
     embeds = [d.embedding for d in resp.data]
     query_vec = np.array(embeds[0])
     recipe_vecs = np.array(embeds[1:])
@@ -99,25 +91,13 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
         SystemMessage(content=AgentText.RERANK_SYSTEM),
         UserMessage(content=AgentText.RERANK_USER.format(query=query) + "\n" + items),
     ]
-    try:
-        resp_rank = chat_complete(
-            config,
-            messages=messages,
-            model=ModelName.CHAT_SMALL,
-            tools=[RANK_TOOL],
-            tool_choice=ToolChoice(function={"name": ToolCall.RANK_RECIPES}),
-            temperature=0.2,
-        )
-        ordered: list[dict[str, Any]] = []
-        if resp_rank.choices[0].message.tool_calls:
-            call = resp_rank.choices[0].message.tool_calls[0]
-            args = RecipeRankArgs.model_validate_json(call.function.arguments)
-            for idx in args.order:
-                if 1 <= idx <= len(ranked):
-                    ordered.append(ranked[idx - 1])
-        if ordered:
-            ranked = ordered
-    except Exception as e:
-        logging.error("LLM ranking failed: %s", e)
+    resp_rank = chat_parse(
+    cfg=config,
+    messages=messages,
+    model=ModelName.CHAT_LARGE,
+    response_format=RecipeRankResponse,
+    )
+    ordered: RecipeRankResponse = resp_rank.choices[0].message.parsed
+    ranked = [ranked[i] for i in ordered.new_order if i < len(ranked)]
 
     return ranked[:RESULT_LIMIT]

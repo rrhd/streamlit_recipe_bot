@@ -10,13 +10,14 @@ from rapidfuzz import fuzz
 from rapidfuzz.process import cdist
 from scipy.optimize import linear_sum_assignment
 
+from constants import SPACY_MODEL
 from nlp_utils import get_canonical_ingredient
 
 DATABASE = "data/recipe_links.db"
 CONCURRENCY_LIMIT = 5
 
 
-nlp = spacy.load("taste_model/model-best")
+nlp = spacy.load(SPACY_MODEL)
 
 logging.basicConfig(
     level=logging.INFO,

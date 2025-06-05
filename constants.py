@@ -1,14 +1,9 @@
 import os
 import tempfile
 from pathlib import Path
-from enum import StrEnum, IntEnum
-try:
-    from mistralai.models.function import Function
-    from mistralai.models.tool import Tool, ToolTypes
-except Exception:  # pragma: no cover - fallback for missing package
-    from mistralai.models.function import Function
-    from mistralai.models.tool import Tool
-    ToolTypes = None
+from enum import StrEnum, IntEnum, Enum
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool, ToolTypes
 
 _PROMPT_DIR = Path(__file__).parent / "prompts"
 
@@ -573,3 +568,22 @@ class SearchLimit(IntEnum):
 
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+
+PROJECT_DIR = Path(__file__).parent
+
+
+class PathName(Enum):
+    RECIPE_DB = PROJECT_DIR / "data" / "recipe_links.db"
+    CACHE_DIR = PROJECT_DIR / "cache"
+
+
+SPACY_MODEL = PROJECT_DIR / "taste_model/model-best"
+
+
+class NumericDefault(IntEnum):
+    DEDUP_THRESHOLD = 95
+
+
+class DefaultDate(StrEnum):
+    DB_MISSING = "2000-01-01"

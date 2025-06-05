@@ -1,6 +1,8 @@
 import spacy
 
-nlp = spacy.load("taste_model/model-best")
+from constants import SPACY_MODEL
+
+nlp = spacy.load(SPACY_MODEL)
 
 from enum import Enum
 
