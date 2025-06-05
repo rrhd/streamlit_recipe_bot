@@ -29,6 +29,14 @@ Scripts in the `scripts/` directory help initialize and migrate the profile data
    PYTHONPATH=. python scripts/check_supabase.py
    ```
 
+4. Prototype using environment variables only:
+   ```bash
+   SUPABASE_URL=... \
+   SUPABASE_API_KEY=... \
+   SUPABASE_DB_URL=... \
+   PYTHONPATH=. python scripts/prototype_supabase_env.py
+   ```
+
 The scripts read Supabase credentials from `.streamlit/secrets.toml`. If that
 file is missing you can instead supply environment variables with the same
 names: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_API_KEY`,
