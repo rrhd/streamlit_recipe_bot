@@ -10,11 +10,11 @@ from rapidfuzz import fuzz
 from rapidfuzz.process import cdist
 from scipy.optimize import linear_sum_assignment
 
-from constants import SPACY_MODEL
+from constants import SPACY_MODEL, PathName, NumericLimit, NumericDefault
 from nlp_utils import get_canonical_ingredient
 
-DATABASE = "data/recipe_links.db"
-CONCURRENCY_LIMIT = 5
+DATABASE = PathName.RECIPE_DB.value
+CONCURRENCY_LIMIT = NumericLimit.CONCURRENCY
 
 
 nlp = spacy.load(SPACY_MODEL)
@@ -43,7 +43,7 @@ def normalize_ingredient_name(text: str) -> str:
 def deduplicate_candidates(
     candidates: list[tuple[str, int]],
     recipes_dict: dict[str, dict],
-    threshold: float = 95,
+    threshold: float = NumericDefault.DEDUP_THRESHOLD,
 ) -> list[tuple[str, int]]:
     """
     Deduplicate candidate recipes in batch by computing a pairwise similarity matrix on their titles.
@@ -597,7 +597,9 @@ def query_top_k(
         return []
     candidate_urls = [c[0] for c in candidates]
     recipes_dict = load_bulk_recipes(candidate_urls)
-    deduped_candidates = deduplicate_candidates(candidates, recipes_dict, threshold=95)
+    deduped_candidates = deduplicate_candidates(
+        candidates, recipes_dict, threshold=NumericDefault.DEDUP_THRESHOLD
+    )
     if not deduped_candidates:
         candidates = build_candidate_urls(
             tag_filters=tag_filters,
@@ -616,7 +618,7 @@ def query_top_k(
         candidate_urls = [c[0] for c in candidates]
         recipes_dict = load_bulk_recipes(candidate_urls)
         deduped_candidates = deduplicate_candidates(
-            candidates, recipes_dict, threshold=95
+            candidates, recipes_dict, threshold=NumericDefault.DEDUP_THRESHOLD
         )
     candidate_urls = [c[0] for c in deduped_candidates]
     recipes_dict = load_bulk_recipes(candidate_urls)

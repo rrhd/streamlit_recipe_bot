@@ -585,5 +585,9 @@ class NumericDefault(IntEnum):
     DEDUP_THRESHOLD = 95
 
 
+class NumericLimit(IntEnum):
+    CONCURRENCY = 5
+
+
 class DefaultDate(StrEnum):
     DB_MISSING = "2000-01-01"

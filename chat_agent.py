@@ -76,7 +76,11 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
         return []
 
     titles = [query] + [r.get("title", "") for r in results]
-    resp = embeddings_create(config, inputs=titles, model=ModelName.EMBED_BASE)
+    try:
+        resp = embeddings_create(config, inputs=titles, model=ModelName.EMBED_BASE)
+    except Exception as e:
+        logging.error("Embedding request failed: %s", e)
+        return results[:RESULT_LIMIT]
     embeds = [d.embedding for d in resp.data]
     query_vec = np.array(embeds[0])
     recipe_vecs = np.array(embeds[1:])
@@ -91,13 +95,16 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
         SystemMessage(content=AgentText.RERANK_SYSTEM),
         UserMessage(content=AgentText.RERANK_USER.format(query=query) + "\n" + items),
     ]
-    resp_rank = chat_parse(
-    cfg=config,
-    messages=messages,
-    model=ModelName.CHAT_LARGE,
-    response_format=RecipeRankResponse,
-    )
-    ordered: RecipeRankResponse = resp_rank.choices[0].message.parsed
-    ranked = [ranked[i] for i in ordered.new_order if i < len(ranked)]
+    try:
+        resp_rank = chat_parse(
+            cfg=config,
+            messages=messages,
+            model=ModelName.CHAT_LARGE,
+            response_format=RecipeRankResponse,
+        )
+        ordered: RecipeRankResponse = resp_rank.choices[0].message.parsed
+        ranked = [ranked[i] for i in ordered.new_order if i < len(ranked)]
+    except Exception as e:
+        logging.error("LLM ranking failed: %s", e)
 
     return ranked[:RESULT_LIMIT]
