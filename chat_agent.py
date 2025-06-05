@@ -2,17 +2,10 @@ import logging
 from typing import Any
 
 import numpy as np
-try:
-    from mistralai.models import SystemMessage, UserMessage
-    from mistralai.models.toolchoice import ToolChoice
-    from mistralai.models.function import Function
-    from mistralai.models.tool import Tool
-except Exception:  # pragma: no cover - fallback
-    from mistralai.models import SystemMessage, UserMessage  # type: ignore
-    from mistralai.models.toolchoice import ToolChoice  # type: ignore
-    from mistralai.models.function import Function  # type: ignore
-    from mistralai.models.tool import Tool  # type: ignore
-from pydantic import BaseModel
+from mistralai.models import SystemMessage, UserMessage
+from mistralai.models.toolchoice import ToolChoice
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool
 
 from config import AppConfig
 from constants import ModelName, ToolText, ToolCall, AgentText, SearchLimit

@@ -1,13 +1,12 @@
-import os
-import sys
+import os, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT))
-
-os.environ["RECIPE_DB_PATH"] = str(ROOT / "data" / "test_recipes.db")
-
 import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+DB   = ROOT / "data" / "test_recipes.db"
+sys.path.insert(0, str(ROOT))
+os.environ["RECIPE_DB_PATH"] = str(DB)
 
 import query_top_k
 from query_top_k import (
@@ -17,7 +16,6 @@ from query_top_k import (
     bulk_compute_coverage,
 )
 from nlp_utils import get_canonical_ingredient
-
 
 def run_query(keywords=None, user_ingredients=None, min_ing_matches=None, top_n_db=10):
     if keywords is None:

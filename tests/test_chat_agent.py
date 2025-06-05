@@ -1,10 +1,4 @@
 import json
-from types import SimpleNamespace
-
-import pytest
-import streamlit as st
-
-st.secrets._secrets = {}
 
 import sys
 from types import ModuleType, SimpleNamespace
@@ -14,7 +8,7 @@ dummy.query_top_k = lambda **kwargs: []
 sys.modules['query_top_k'] = dummy
 
 
-from config import AppConfig
+from config import AppConfig, CONFIG
 import chat_agent
 from chat_agent import search_and_rerank
 
@@ -41,7 +35,7 @@ class DummyChatResp:
 
 
 def test_search_and_rerank_uses_llm_order(monkeypatch):
-    cfg = AppConfig(api_key="test")
+    cfg = CONFIG
 
     sample_results = [
         {"title": "A", "url": "u1"},

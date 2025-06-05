@@ -1,20 +1,13 @@
 import json
-from types import SimpleNamespace
-
-import pytest
-import streamlit as st
-
-st.secrets._secrets = {}
-
 import sys
 from types import ModuleType
+from types import SimpleNamespace
+
+from config import CONFIG
 
 dummy = ModuleType('query_top_k')
 dummy.query_top_k = lambda **kwargs: []
 sys.modules['query_top_k'] = dummy
-
-
-from config import AppConfig
 from session_state import SessionStateKeys
 from ui_pages.chatbot import render_chatbot_page
 import chat_agent
@@ -85,7 +78,7 @@ class FakeStreamlit:
 
 
 def test_render_chatbot_page_flow(monkeypatch):
-    cfg = AppConfig(api_key="test")
+    cfg = CONFIG
     st = FakeStreamlit(user_input="chicken")
     st.session_state[SessionStateKeys.ALL_SOURCES_LIST] = ["s1"]
 

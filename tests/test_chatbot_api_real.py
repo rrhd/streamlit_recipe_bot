@@ -1,11 +1,7 @@
-import os
-import streamlit as st
-import pytest
-
-from config import AppConfig
 from chat_agent import search_and_rerank
-from ui_pages.chatbot import render_chatbot_page
+from config import CONFIG
 from session_state import SessionStateKeys
+from ui_pages.chatbot import render_chatbot_page
 
 
 class _FakeChat:
@@ -51,13 +47,11 @@ class _FakeSidebar:
         self.records.append(text)
 
 
-API_KEY = st.secrets.get("api_key") or os.environ.get("MISTRAL_API_KEY")
 
 
-@pytest.mark.skipif(API_KEY is None, reason="Mistral API key not configured")
+
+
 def test_search_and_rerank_real(monkeypatch):
-    cfg = AppConfig(api_key=API_KEY)
-
     monkeypatch.setattr(
         "chat_agent.query_top_k",
         lambda **_: [
@@ -66,13 +60,11 @@ def test_search_and_rerank_real(monkeypatch):
         ],
     )
 
-    results = search_and_rerank("chicken rice", cfg, ["dummy"])
+    results = search_and_rerank("chicken rice", CONFIG, ["dummy"])
     assert results and isinstance(results[0], dict)
 
 
-@pytest.mark.skipif(API_KEY is None, reason="Mistral API key not configured")
 def test_chatbot_page_real(monkeypatch):
-    cfg = AppConfig(api_key=API_KEY)
     fake = _FakeChat(user_input="chicken rice")
     fake.session_state[SessionStateKeys.ALL_SOURCES_LIST] = ["dummy"]
 
@@ -81,6 +73,6 @@ def test_chatbot_page_real(monkeypatch):
         lambda q, c, s: [{"title": "R1", "url": "https://example.com"}],
     )
 
-    render_chatbot_page(fake, cfg)
+    render_chatbot_page(fake, CONFIG)
 
     assert any(role == "assistant" for role, _ in fake.messages)

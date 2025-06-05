@@ -1,14 +1,6 @@
-import sys
-from pathlib import Path
-
-from dotenv import load_dotenv
 import psycopg2
 import pytest
 from supabase import create_client
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
-load_dotenv()
 
 from config import CONFIG
 from constants import DbKeys

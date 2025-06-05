@@ -5,11 +5,6 @@ import os
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.modules.setdefault("streamlit", SimpleNamespace(secrets={}))
-sys.path.insert(0, str(ROOT))
-os.environ["RECIPE_DB_PATH"] = str(ROOT / "data" / "test_recipes.db")
-
 from constants import PathName
 from config import AppConfig
 import cache_manager
