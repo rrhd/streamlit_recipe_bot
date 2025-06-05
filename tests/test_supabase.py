@@ -9,6 +9,15 @@ from supabase import create_client
 from config import CONFIG
 from constants import DbKeys, LogMsg
 from log_utils import ErrorPayload, log_with_payload
+from scripts.init_supabase_project import SetupConfig
+
+
+def test_setup_config_load_alt_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    token = "pat-from-env"
+    monkeypatch.setenv("SUPA_BASE_API_KEY", token)
+    monkeypatch.delenv("SUPABASE_ACCESS_TOKEN", raising=False)
+    cfg = SetupConfig.load()
+    assert cfg.access_token == token
 
 
 @pytest.fixture(scope="module")

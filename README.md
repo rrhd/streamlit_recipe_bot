@@ -41,4 +41,5 @@ The scripts read Supabase credentials from `.streamlit/secrets.toml`. If that
 file is missing you can instead supply environment variables with the same
 names: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_API_KEY`,
 `SUPABASE_DB_URL`, and `SUPABASE_ORG_ID`. The initialization script also
-accepts the PAT via `SUPABASE_API_KEY` when `SUPABASE_ACCESS_TOKEN` is absent.
+accepts the PAT via `SUPA_BASE_API_KEY` or `SUPABASE_API_KEY` when
+`SUPABASE_ACCESS_TOKEN` is absent.

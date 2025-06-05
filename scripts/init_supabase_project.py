@@ -45,8 +45,10 @@ class SetupConfig(BaseModel):
         data = toml.loads(path.read_text()) if path.exists() else {}
         token = (
             os.getenv(SupabaseEnv.ACCESS_TOKEN.value)
+            or os.getenv(SupabaseEnv.ALT_ACCESS_TOKEN.value)
             or os.getenv(SupabaseEnv.API_KEY.value)
             or data.get("supabase_access_token")
+            or data.get("supa_base_api_key")
             or data.get("supabase_api_key", "")
         )
         org_id = os.getenv(SupabaseEnv.ORG_ID.value) or data.get("supabase_org_id")
