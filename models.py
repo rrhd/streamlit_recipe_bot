@@ -31,22 +31,6 @@ def strict_model_schema(model: type[BaseModel]) -> dict:
     return rec_strict_json_schema(model.model_json_schema())
 
 
-class RecipeRankResponse(BaseModel):
-    """Structured ranking for the candidate recipes."""
-
-    new_order: list[int] = Field(
-        ...,
-        description=(
-            "0-based indices of the input recipes in preferred order. "
-            "Include only recipes you deem relevant; omit indices for irrelevant recipes."
-        ),
-        examples=[
-            ["0", "2", "1"],
-            ["1", "0", "2"],
-        ],
-    )
-
-
 class QueryRequest(BaseModel):
     """Parameters for advanced recipe searches."""
 
@@ -80,29 +64,29 @@ class QueryRequest(BaseModel):
         examples=[{"course": ["Dessert"]}],
         description="Tags to exclude grouped by category.",
     )
-    min_ing_matches: int | None = Field(
-        default=None,
+    min_ing_matches: int = Field(
+        default=0,
+        examples=[2],
         description="Minimum number of ingredient matches required.",
-        examples=["2"],
     )
     tag_filter_mode: TagFilterMode = Field(
         default=TagFilterMode.AND,
         description="Mode for combining include tag filters.",
     )
-    max_steps: int | None = Field(
-        default=None,
-        description="Maximum allowed instruction steps (None for no limit).",
-        examples=["10"],
+    max_steps: int = Field(
+        default=0,
+        examples=[10],
+        description="Maximum allowed instruction steps (0 for no limit).",
     )
-    user_coverage_req: float | None = Field(
-        default=None,
+    user_coverage_req: float = Field(
+        default=0.0,
+        examples=[0.5],
         description="Required fraction of user ingredients present in recipe.",
-        examples=["0.5"],
     )
-    recipe_coverage_req: float | None = Field(
-        default=None,
+    recipe_coverage_req: float = Field(
+        default=0.0,
+        examples=[0.5],
         description="Required fraction of recipe ingredients present in user list.",
-        examples=["0.5"],
     )
     keywords_to_include: list[str] = Field(
         default_factory=list,
