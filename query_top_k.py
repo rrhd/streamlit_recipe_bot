@@ -1,22 +1,20 @@
 import json
 import logging
+import os
 import re
 import sqlite3
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import spacy
 from rapidfuzz import fuzz
 from rapidfuzz.process import cdist
 from scipy.optimize import linear_sum_assignment
 
 from nlp_utils import get_canonical_ingredient
-
-DATABASE = "data/recipe_links.db"
-CONCURRENCY_LIMIT = 5
+from constants import ConfigKeys, PathName, NumericDefault
 
 
-nlp = spacy.load("taste_model/model-best")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,8 +22,24 @@ logging.basicConfig(
 )
 
 
-def get_db_connection():
-    return sqlite3.connect(DATABASE)
+def get_db_path() -> str:
+    return os.environ.get(
+        "RECIPE_DB_PATH",
+        str(Path(ConfigKeys.DOWNLOAD_DEST_DIR) / PathName.RECIPE_DB),
+    )
+
+
+def get_db_connection(db_path: str | None = None) -> sqlite3.Connection:
+    """Return an SQLite connection with a REGEXP helper."""
+    conn = sqlite3.connect(db_path or get_db_path())
+    conn.create_function(
+        "REGEXP",
+        2,
+        lambda pattern, text: 1
+        if text is not None and re.search(pattern, text, re.IGNORECASE)
+        else 0,
+    )
+    return conn
 
 
 def normalize_ingredient_name(text: str) -> str:
@@ -42,7 +56,7 @@ def normalize_ingredient_name(text: str) -> str:
 def deduplicate_candidates(
     candidates: list[tuple[str, int]],
     recipes_dict: dict[str, dict],
-    threshold: float = 95,
+    threshold: float = NumericDefault.DEDUP_THRESHOLD,
 ) -> list[tuple[str, int]]:
     """
     Deduplicate candidate recipes in batch by computing a pairwise similarity matrix on their titles.
@@ -55,9 +69,14 @@ def deduplicate_candidates(
     if n == 0:
         return []
 
-    candidate_urls = np.array([url for url, _ in candidates])
+    candidate_urls = [url for url, _ in candidates]
+    candidate_titles = np.array([
+        recipes_dict.get(url, {}).get("title", url) for url in candidate_urls
+    ])
 
-    sim_matrix = cdist(candidate_urls, candidate_urls, scorer=fuzz.token_set_ratio)
+    sim_matrix = cdist(
+        candidate_titles, candidate_titles, scorer=fuzz.token_set_ratio
+    )
 
     lengths = np.array([len(json.dumps(recipes_dict[url])) for url in candidate_urls])
 
@@ -215,39 +234,41 @@ def build_candidate_urls(
 
     if keywords_to_include:
         for kw in keywords_to_include:
+            pattern = rf"\b{re.escape(kw)}\b"
             incl_clause = (
                 "("
-                " s.title LIKE ? COLLATE NOCASE"
-                "  OR s.description LIKE ? COLLATE NOCASE"
+                " REGEXP(?, s.title)"
+                "  OR REGEXP(?, s.description)"
                 "  OR EXISTS("
                 "     SELECT 1 FROM recipe_ingredients i2"
                 "     WHERE i2.url=s.url"
-                "       AND i2.normalized_ingredient LIKE ? COLLATE NOCASE"
+                "       AND REGEXP(?, i2.normalized_ingredient)"
                 "  )"
                 ")"
             )
             where_parts.append(incl_clause)
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
+            final_params.append(pattern)
+            final_params.append(pattern)
+            final_params.append(pattern)
 
     if keywords_to_exclude:
         for kw in keywords_to_exclude:
+            pattern = rf"\b{re.escape(kw)}\b"
             excl_clause = (
                 "NOT ("
-                " s.title LIKE ? COLLATE NOCASE"
-                "  OR s.description LIKE ? COLLATE NOCASE"
+                " REGEXP(?, s.title)"
+                "  OR REGEXP(?, s.description)"
                 "  OR EXISTS("
                 "     SELECT 1 FROM recipe_ingredients i2"
                 "     WHERE i2.url=s.url"
-                "       AND i2.normalized_ingredient LIKE ? COLLATE NOCASE"
+                "       AND REGEXP(?, i2.normalized_ingredient)"
                 "  )"
                 ")"
             )
             where_parts.append(excl_clause)
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
-            final_params.append(f"%{kw}%")
+            final_params.append(pattern)
+            final_params.append(pattern)
+            final_params.append(pattern)
 
     if where_parts:
         sql += " WHERE " + " AND ".join(where_parts)
@@ -596,7 +617,9 @@ def query_top_k(
         return []
     candidate_urls = [c[0] for c in candidates]
     recipes_dict = load_bulk_recipes(candidate_urls)
-    deduped_candidates = deduplicate_candidates(candidates, recipes_dict, threshold=95)
+    deduped_candidates = deduplicate_candidates(
+        candidates, recipes_dict, threshold=NumericDefault.DEDUP_THRESHOLD
+    )
     if not deduped_candidates:
         candidates = build_candidate_urls(
             tag_filters=tag_filters,
@@ -615,7 +638,9 @@ def query_top_k(
         candidate_urls = [c[0] for c in candidates]
         recipes_dict = load_bulk_recipes(candidate_urls)
         deduped_candidates = deduplicate_candidates(
-            candidates, recipes_dict, threshold=95
+            candidates,
+            recipes_dict,
+            threshold=NumericDefault.DEDUP_THRESHOLD,
         )
     candidate_urls = [c[0] for c in deduped_candidates]
     recipes_dict = load_bulk_recipes(candidate_urls)

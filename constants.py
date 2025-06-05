@@ -1,6 +1,12 @@
 import os
 import tempfile
+from pathlib import Path
 from enum import StrEnum, IntEnum
+from mistralai.models.function import Function
+from mistralai.models.tool import Tool, ToolTypes
+
+_PROMPT_DIR = Path(__file__).parent / "prompts"
+HELP_MD = Path(__file__).parent / "help.md"
 
 
 class FileExt(StrEnum):
@@ -22,24 +28,6 @@ class FileMode(StrEnum):
     WRITE_BINARY = "wb"
 
 
-class DefaultKeys(StrEnum):
-    """Keys for Pydantic default values."""
-
-    INGREDIENTS_TEXT = "ingredients_text"
-    MUST_USE_TEXT = "must_use_text"
-    EXCLUDED_TEXT = "excluded_text"
-    KEYWORDS_INCLUDE = "keywords_include"
-    KEYWORDS_EXCLUDE = "keywords_exclude"
-    MIN_ING_MATCHES = "min_ing_matches"
-    MAX_STEPS = "max_steps"
-    USER_COVERAGE = "user_coverage"
-    RECIPE_COVERAGE = "recipe_coverage"
-    TAG_FILTER_MODE = "tag_filter_mode"
-    USERNAME = "username"
-    SIMPLE_QUERY = "simple_query"
-    PROFILE_MESSAGE = "profile_message"
-    NO_RECIPES_FOUND = "no_recipes_found"
-    LOADING_MESSAGE = "loading_message"
 
 
 class CategoryKeys(StrEnum):
@@ -87,43 +75,10 @@ class FormatStrings(StrEnum):
     SLIDER_PERCENT = "%.0f%%"
     RECIPE_LABEL = "{coverage:.3f} - {title}"
     RECIPE_LABEL_DUPLICATE = "{original_label} ({count})"
-    PDF_DATA_URI = "data:application/pdf;base64,{base64_pdf}"
     BYTES_UNDECODABLE = "<Bytes length={length}, undecodable>"
     TRUNCATION_SUFFIX = "..."
 
 
-class HtmlClasses(StrEnum):
-    """CSS classes used in generated HTML."""
-
-    RECIPE_CONTAINER = "recipe-container"
-    RECIPE_TITLE = "recipe-title"
-    RECIPE_SECTION = "recipe-section"
-    RECIPE_INGREDIENTS = "recipe-ingredients"
-    RECIPE_INSTRUCTIONS = "recipe-instructions"
-    RECIPE_SOURCE = "recipe-source"
-
-
-class HtmlTags(StrEnum):
-    """HTML tags."""
-
-    H2 = "h2"
-    H3 = "h3"
-    P = "p"
-    UL = "ul"
-    OL = "ol"
-    LI = "li"
-    DIV = "div"
-    A = "a"
-    STRONG = "strong"
-    TABLE = "table"
-    THEAD = "thead"
-    TBODY = "tbody"
-    TR = "tr"
-    TH = "th"
-    TD = "td"
-    STYLE = "style"
-    SMALL = "small"
-    BR = "br"
 
 
 class MiscValues(StrEnum):
@@ -135,8 +90,8 @@ class MiscValues(StrEnum):
     EMPTY = ""
     HTTP_PREFIX = "http://"
     HTTPS_PREFIX = "https://"
-    DEFAULT_NA = "N/A"
     DEFAULT_STEP = "?"
+    CACHE_DIR = "recipe_cache"
 
 
 class ConfigKeys(StrEnum):
@@ -443,6 +398,7 @@ class LogMsg(StrEnum):
     ADV_SEARCH_PROCESSED = (
         "Processed results. HTML length: {html_len}, Mapping keys: {map_keys}"
     )
+    ADV_SEARCH_RESET_CLICKED = "Advanced search reset button clicked."
     SIMPLE_SEARCH_CLICKED = "Simple search button clicked."
     SIMPLE_SEARCH_PARAMS = (
         "Calling query_top_k for simple search with params: {params_json}"
@@ -513,6 +469,37 @@ class UserPrompt(StrEnum):
 
 class ModelName(StrEnum):
     VISION = "mistral-small-2503"
+    CHAT_SMALL = "mistral-small-latest"
+    CHAT_LARGE = "mistral-large-latest"
+    EMBED_BASE = "mistral-embed"
+
+
+class ToolText(StrEnum):
+    """Text for tool descriptions and parameters."""
+
+    SEARCH_DESC = "Search and rank recipes by keywords"
+    QUERY_DESC = "Keywords for searching recipes"
+    RANK_DESC = "Return a new ordering for the given recipes"
+    ORDER_PARAM = "New ordering of recipe numbers"
+
+
+class ToolCall(StrEnum):
+    SEARCH_RECIPES = "search_recipes"
+    RANK_RECIPES = "rank_recipes"
+
+
+class AgentText(StrEnum):
+    """Prompts for the chatbot and ranking agents."""
+
+    RERANK_SYSTEM = (_PROMPT_DIR / "rerank_system.md").read_text("utf-8")
+    RERANK_USER = (
+        "Given the user's intent '{query}', order the following recipe URLs by relevance."
+    )
+
+    CHATBOT_SYSTEM = (_PROMPT_DIR / "chatbot_system.md").read_text("utf-8")
+
+    PARSE_SYSTEM = (_PROMPT_DIR / "parse_system.md").read_text("utf-8")
+    PARSE_USER = "Request: {query}"
 
 
 class CacheLimit(IntEnum):
@@ -520,5 +507,23 @@ class CacheLimit(IntEnum):
     MAX_IMAGES = 8
 
 
+class SearchLimit(IntEnum):
+    RESULTS = 5
+
+
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+
+class PathName(StrEnum):
+    RECIPE_DB = "recipe_links.db"
+    CACHE_DIR = "recipe_cache"
+    SPACY_MODEL = "taste_model/model-best"
+
+
+class NumericDefault(IntEnum):
+    DEDUP_THRESHOLD = 95
+
+
+class DefaultDate(StrEnum):
+    DB_MISSING = "2000-01-01"

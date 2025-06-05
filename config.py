@@ -11,7 +11,7 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix,
+    LogMsg, ModelName, Suffix, PathName,
 )
 
 
@@ -32,14 +32,12 @@ class DefaultValues(BaseModel):
     simple_query: str = Field(default="")
     profile_message: str = Field(default="<p></p>")
     no_recipes_found: str = Field(default="No recipes found.")
-    loading_message: str = Field(default="<p>Loading...</p>")
 
 
 class LogConfig(BaseModel):
     """Configuration for logging."""
 
     truncate_length: int = Field(default=500)
-    default_payload_value: str = Field(default="<Not Provided>")
 
 
 class AppConfig(BaseSettings):
@@ -49,7 +47,7 @@ class AppConfig(BaseSettings):
     )
     model: ModelName = ModelName.VISION
     prompt_path: Path | None = Field(default=None)
-    cache_dir: Path | None = Field(default=None)
+    cache_dir: Path = Field(default_factory=lambda: Path(PathName.CACHE_DIR))
     max_log_length: int = 200
     truncation_suffix: Suffix = Suffix.ELLIPSIS
     model_config = SettingsConfigDict(

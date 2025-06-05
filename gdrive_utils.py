@@ -27,13 +27,8 @@ from ui_helpers import UiText
 def _get_gdrive_service() -> Any | None:
     """Gets an authenticated Google Drive API client."""
 
-    if GDriveKeys.SECRET_ACCOUNT not in st.secrets:
-        st.error(LogMsg.GDRIVE_MISSING_SECRET_ACCOUNT)
-        log_with_payload(logging.ERROR, LogMsg.GDRIVE_MISSING_SECRET_ACCOUNT)
-        return None
-
     try:
-        folder_id = st.secrets[GDriveKeys.SECRET_DRIVE][GDriveKeys.FOLDER_ID]
+        folder_id = st.secrets[f"{GDriveKeys.SECRET_DRIVE}_{GDriveKeys.FOLDER_ID}"]
 
         if not folder_id:
             log_with_payload(
@@ -55,9 +50,15 @@ def _get_gdrive_service() -> Any | None:
             f"Streamlit secret '{GDriveKeys.SECRET_DRIVE}' is not dictionary-like.",
         )
         return None
+    # creds_info is a set of keys all starting with f"{GDriveKeys.SECRET_ACCOUNT}_", find all those and strip the prefix
+    prefix = f"{GDriveKeys.SECRET_ACCOUNT}_"
+    creds_info = {
+        k[len(prefix) :]: v
+        for k, v in st.secrets.items()
+        if k.startswith(prefix) and v is not None
+    }
 
     try:
-        creds_info = st.secrets[GDriveKeys.SECRET_ACCOUNT]
         creds = service_account.Credentials.from_service_account_info(creds_info)
         service = build(
             GDriveKeys.API_SERVICE, GDriveKeys.API_VERSION, credentials=creds
@@ -136,7 +137,7 @@ def download_essential_files() -> None:
         )
         return
 
-    folder_id = st.secrets.get(GDriveKeys.SECRET_DRIVE, {}).get(GDriveKeys.FOLDER_ID)
+    folder_id = st.secrets.get(f"{GDriveKeys.SECRET_DRIVE}_{GDriveKeys.FOLDER_ID}")
     dest_dir = CONFIG.download_dest_dir
     essential_compressed_files = set(CONFIG.essential_filenames or [])
 
@@ -586,7 +587,7 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
 
         return [], {}
 
-    folder_id = st.secrets.get(GDriveKeys.SECRET_DRIVE, {}).get(GDriveKeys.FOLDER_ID)
+    folder_id = st.secrets.get(f"{GDriveKeys.SECRET_DRIVE}_{GDriveKeys.FOLDER_ID}")
     if not folder_id:
         log_with_payload(
             logging.ERROR, LogMsg.GDRIVE_FOLDER_ID_MISSING + f"({func_name})"
@@ -601,7 +602,6 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
     )
     book_labels = []
     book_mapping: dict[str, dict[str, str]] = {}
-    all_files_count = 0
 
     try:
         page_token = None
@@ -627,7 +627,6 @@ def list_drive_books_cached() -> tuple[list[str], dict[str, dict[str, str]]]:
                 return [], {}
 
             for f in files:
-                all_files_count += 1
                 file_name = f.get(GDriveKeys.FILE_NAME)
                 file_id = f.get(GDriveKeys.FILE_ID)
 
@@ -734,7 +733,7 @@ def download_gdrive_file(
                 UiText.SPINNER_DOWNLOADING_ON_DEMAND.format(filename=file_name)
             ):
                 while not done:
-                    status, done = downloader.next_chunk(
+                    _, done = downloader.next_chunk(
                         num_retries=CONFIG.gdrive_download_retries
                     )
 

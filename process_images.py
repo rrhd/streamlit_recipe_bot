@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Python 3.12
-import asyncio
 import base64
 import json
 import logging

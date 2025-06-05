@@ -1,0 +1,1 @@
+Interpret the user's request and produce JSON parameters for a recipe search. Include keywords, ingredient lists, or other filters if they are mentioned. Use sensible defaults when information is missing.
