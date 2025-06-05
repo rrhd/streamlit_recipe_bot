@@ -1,6 +1,7 @@
 import os
 import tempfile
 from enum import StrEnum, IntEnum
+from pathlib import Path
 
 
 class FileExt(StrEnum):
@@ -178,7 +179,19 @@ class SupabaseEnv(StrEnum):
     API_KEY = "SUPABASE_API_KEY"
     DB_URL = "SUPABASE_DB_URL"
     ACCESS_TOKEN = "SUPABASE_ACCESS_TOKEN"
+    ALT_ACCESS_TOKEN = "SUPA_BASE_API_KEY"
     ORG_ID = "SUPABASE_ORG_ID"
+
+
+class SupabaseMgmtEndpoint(StrEnum):
+    """Management API endpoints."""
+
+    BASE = "https://api.supabase.com"
+    ORGS = "/v1/organizations"
+    PROJECTS = "/v1/projects"
+    PROJECT = "/v1/projects/{ref}"
+    API_KEYS = "/v1/projects/{ref}/api-keys"
+    DB_EXECUTE = "/v1/projects/{ref}/db/execute"
 
 
 class DbKeys(StrEnum):
@@ -274,6 +287,7 @@ class LogMsg(StrEnum):
     CONFIG_VALIDATION_INVALID_STR = "Dependent fields for {field} are not valid strings"
     CONFIG_INVALID_DEFAULT_MODE = "Invalid default TagFilterMode: {mode}"
     CONFIG_LOAD_FAIL = "CRITICAL: Failed to load AppConfig: {error}"
+    CONFIG_SECRETS_LOAD_FAIL = "Unable to access Streamlit secrets: {error}"
 
     EBOOK_CONVERT_REQ = "Request to ensure PDF format for: {source_path}"
     EBOOK_CONVERT_SRC_NOT_FOUND = (
@@ -541,3 +555,6 @@ class CacheLimit(IntEnum):
 
 class Suffix(StrEnum):
     ELLIPSIS = "…"
+
+# Project directory
+PROJECT_DIR = Path(__file__).resolve().parent

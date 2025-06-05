@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from typing import Self
 import streamlit as st
@@ -11,7 +12,9 @@ from constants import (
     FileExt,
     ConfigKeys,
     TagFilterMode,
-    LogMsg, ModelName, Suffix,
+    LogMsg,
+    ModelName,
+    Suffix,
 )
 
 
@@ -44,6 +47,7 @@ class LogConfig(BaseModel):
 
 class AppConfig(BaseSettings):
     """Application configuration settings."""
+
     api_key: str | None = Field(
         default=None,
     )

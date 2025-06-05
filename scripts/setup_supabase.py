@@ -3,11 +3,20 @@ import sqlite3
 from pathlib import Path
 
 import psycopg2
+import requests
 from pydantic import BaseModel, Field
 from supabase import Client, create_client
 
 from config import CONFIG
-from constants import DbKeys
+from constants import DbKeys, SupabaseMgmtEndpoint
+
+
+def _headers(token: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {token}",
+        "apikey": token,
+        "Content-Type": "application/json",
+    }
 
 
 class MigrationConfig(BaseModel):
@@ -21,11 +30,23 @@ def create_table_if_missing(cfg: MigrationConfig) -> None:
     """Create the remote profiles table if it does not exist."""
     if not cfg.supabase_db_url:
         raise ValueError("Supabase DB URL required")
-
-    with psycopg2.connect(cfg.supabase_db_url) as conn:
-        with conn.cursor() as cur:
-            cur.execute(DbKeys.SQL_CREATE_PROFILES_PG)
-            conn.commit()
+    try:
+        with psycopg2.connect(cfg.supabase_db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(DbKeys.SQL_CREATE_PROFILES_PG)
+                conn.commit()
+    except Exception as exc:  # pragma: no cover - network error handling
+        logging.warning("DB connect failed, falling back to Management API: %s", exc)
+        ref = cfg.supabase_url.split("//")[-1].split(".")[0]
+        token = CONFIG.supabase_access_token or cfg.supabase_key
+        sql = DbKeys.SQL_CREATE_PROFILES_PG.strip()
+        resp = requests.post(
+            SupabaseMgmtEndpoint.BASE + SupabaseMgmtEndpoint.DB_EXECUTE.format(ref=ref),
+            headers=_headers(token),
+            json={"query": sql},
+            timeout=30,
+        )
+        resp.raise_for_status()
 
 
 def migrate_profiles(cfg: MigrationConfig, client: Client) -> None:
