@@ -1,8 +1,10 @@
 """Models for request payloads."""
 
-from typing import Any
+from enum import StrEnum
+from typing import Any, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from pydantic import RootModel
 
 from constants import TagFilterMode
 
@@ -31,63 +33,265 @@ def strict_model_schema(model: type[BaseModel]) -> dict:
     return rec_strict_json_schema(model.model_json_schema())
 
 
+class RecipeRankResponse(BaseModel):
+    """Structured ranking for the candidate recipes."""
+
+    new_order: list[int] = Field(
+        ...,
+        description=(
+            "0-based indices of the input recipes in preferred order. "
+            "Include only recipes you deem relevant; omit indices for irrelevant recipes."
+        ),
+        examples=[
+        ["0", "2", "1"],
+        ["1", "0", "2"],
+        ],
+    )
+
+class CourseEnum(StrEnum):
+    Appetizers = "Appetizers"
+    Desserts_or_Baked_Goods = "Desserts or Baked Goods"
+    Main_Courses = "Main Courses"
+    Side_Dishes = "Side Dishes"
+
+
+class MainIngredientEnum(StrEnum):
+    Beans = "Beans"
+    Beef = "Beef"
+    Cheese = "Cheese"
+    Chicken = "Chicken"
+    Chocolate = "Chocolate"
+    Duck = "Duck"
+    Eggs = "Eggs"
+    Eggs_and_Dairy = "Eggs & Dairy"
+    Fish_and_Seafood = "Fish & Seafood"
+    Fruit = "Fruit"
+    Fruits_and_Vegetables = "Fruits & Vegetables"
+    Game_Birds = "Game Birds"
+    Grains = "Grains"
+    Lamb = "Lamb"
+    Meat = "Meat"
+    Pasta = "Pasta"
+    Pasta_Grains_Rice_and_Beans = "Pasta, Grains, Rice & Beans"
+    Pork = "Pork"
+    Potatoes = "Potatoes"
+    Poultry = "Poultry"
+    Rice = "Rice"
+    Turkey = "Turkey"
+    Vegetables = "Vegetables"
+
+
+class DishTypeEnum(StrEnum):
+    Beverages = "Beverages"
+    Breads = "Breads"
+    Breakfast_and_Brunch = "Breakfast & Brunch"
+    Brownies_and_Bars = "Brownies & Bars"
+    Cakes = "Cakes"
+    Candy = "Candy"
+    Casseroles = "Casseroles"
+    Condiments = "Condiments"
+    Cookies = "Cookies"
+    Dessert_Pies = "Dessert Pies"
+    Frozen_Desserts = "Frozen Desserts"
+    Fruit_Desserts = "Fruit Desserts"
+    Marinades = "Marinades"
+    Pizza = "Pizza"
+    Puddings_Custards_Gelatins_and_Souffles = "Puddings, Custards, Gelatins, & Souffles"
+    Quick_Breads = "Quick Breads"
+    Roasts = "Roasts"
+    Rubs = "Rubs"
+    Salads = "Salads"
+    Sandwiches = "Sandwiches"
+    Sauces = "Sauces"
+    Savory_Pies_and_Tarts = "Savory Pies & Tarts"
+    Snacks = "Snacks"
+    Soups = "Soups"
+    Stews = "Stews"
+    Tarts = "Tarts"
+
+
+class RecipeTypeEnum(StrEnum):
+    Cast_Iron_Skillet = "Cast-Iron Skillet"
+    Dairy_Free = "Dairy-Free"
+    For_Two = "For Two"
+    Gluten_Free = "Gluten Free"
+    Grilling_and_Barbecue = "Grilling & Barbecue"
+    Light = "Light"
+    Make_Ahead = "Make Ahead"
+    Pressure_Cooker = "Pressure Cooker"
+    Quick = "Quick"
+    Reduced_Sugar = "Reduced Sugar"
+    Slow_Cooker = "Slow Cooker"
+    Vegan = "Vegan"
+    Vegetarian = "Vegetarian"
+    Weeknight = "Weeknight"
+
+
+class CuisineEnum(StrEnum):
+    Africa_and_Middle_East = "Africa & Middle-East"
+    African = "African"
+    American = "American"
+    Asia = "Asia"
+    Asian = "Asian"
+    California = "California"
+    Caribbean = "Caribbean"
+    Central_and_South_American = "Central & South American"
+    Chinese = "Chinese"
+    Creole_and_Cajun = "Creole & Cajun"
+    Eastern_European_and_German = "Eastern European & German"
+    Europe = "Europe"
+    French = "French"
+    Great_Britain = "Great Britain"
+    Greek = "Greek"
+    Indian = "Indian"
+    Indonesian = "Indonesian"
+    Irish = "Irish"
+    Italian = "Italian"
+    Japanese = "Japanese"
+    Korean = "Korean"
+    Latin_America_and_Caribbean = "Latin America & Caribbean"
+    Mexican = "Mexican"
+    Mid_Atlantic = "Mid-Atlantic"
+    Middle_Eastern = "Middle Eastern"
+    Midwest = "Midwest"
+    New_England = "New England"
+    Pacific_Northwest = "Pacific Northwest"
+    Southern = "Southern"
+    Southwest_Tex_Mex = "Southwest (Tex-Mex)"
+    Spanish_and_Portuguese = "Spanish & Portuguese"
+    Thai = "Thai"
+    US_and_Canada = "US & Canada"
+    Vietnamese = "Vietnamese"
+
+
+class HolidayEnum(StrEnum):
+    Fourth_of_July = "4th of July"
+    Easter = "Easter"
+    Hanukkah = "Hanukkah"
+    Holiday = "Holiday"
+    Passover = "Passover"
+    Super_Bowl = "Super Bowl"
+    Thanksgiving = "Thanksgiving"
+    Valentines_Day = "Valentines Day"
+
+
+TAG_ENUMS: dict[str, type[StrEnum]] = {
+    "course": CourseEnum,
+    "main_ingredient": MainIngredientEnum,
+    "dish_type": DishTypeEnum,
+    "recipe_type": RecipeTypeEnum,
+    "cuisine": CuisineEnum,
+    "holiday": HolidayEnum,
+}
+
+TAG_ENUM_TEXT: dict[str, str] = {
+    key: ", ".join(e for e in enum_cls)
+    for key, enum_cls in TAG_ENUMS.items()
+}
+
+# ─────────────────────── TAG FILTER MODEL ─────────────────────
+class TagFilters(RootModel[dict[str, list[str]]]):
+    """
+    Mapping **{tag_type: [categories]}**.
+
+    • *tag_type* must be one of:
+      "course", "main_ingredient", "dish_type", "recipe_type", "cuisine", "holiday".
+
+    • *categories* must be strings drawn from the **allowed values** for that type
+      (listed verbosely below).
+
+    Allowed categories                         (flat string list per tag_type)
+    ───────────────────────────────────────────────────────────────────────────
+    course          → {TAG_ENUM_TEXT['course']}
+    main_ingredient → {TAG_ENUM_TEXT['main_ingredient']}
+    dish_type       → {TAG_ENUM_TEXT['dish_type']}
+    recipe_type     → {TAG_ENUM_TEXT['recipe_type']}
+    cuisine         → {TAG_ENUM_TEXT['cuisine']}
+    holiday         → {TAG_ENUM_TEXT['holiday']}
+    """
+
+    @model_validator(mode="after")
+    def _validate(self) -> Self:
+
+        if not isinstance(self.root, dict):
+
+            raise ValueError("TagFilters root must be a dictionary.")
+        for tag_type, cats in self.root.items():
+            if tag_type not in TAG_ENUMS:
+                raise ValueError(f"Unsupported tag_type {tag_type!r}")
+            if not isinstance(cats, list):
+                raise ValueError(f"Categories for tag_type {tag_type!r} must be a list.")
+            enum_cls = TAG_ENUMS[tag_type]
+            bad = [c for c in cats if not isinstance(c, str) or c not in enum_cls._value2member_map_]
+            if bad:
+                raise ValueError(
+                    f"{tag_type}: invalid categories {bad!r}. "
+                    f"Allowed: {', '.join(e for e in enum_cls)}"
+                )
+        return self
+
+
 class QueryRequest(BaseModel):
     """Parameters for advanced recipe searches."""
 
     user_ingredients: list[str] = Field(
         default_factory=list,
         examples=[["chicken", "rice"]],
-        description="Ingredients the user has available.",
+        description=(
+            "Free-form list of everything in the user's pantry.\n"
+            "• Used purely for *scoring* unless numeric thresholds below are set."
+        ),
     )
     must_use: list[str] = Field(
         default_factory=list,
         examples=[["onion"]],
-        description="Ingredients that must appear in the recipe.",
+        description=(
+            "If non-empty, EVERY listed ingredient must appear in the recipe.\n"
+            "Missing even one → recipe is discarded."
+        ),
     )
     forbidden_ingredients: list[str] = Field(
         default_factory=list,
         examples=[["peanut"]],
-        description="Ingredients that must be absent from the recipe.",
+        description="Recipes containing ANY of these ingredients are rejected outright.",
     )
-    sources: list[str] = Field(
-        default_factory=list,
-        examples=[["example.com"]],
-        description="Recipe source domains to search.",
-    )
-    tag_filters: dict[str, list[str]] = Field(
-        default_factory=dict,
+    tag_filters: TagFilters = Field(
         examples=[{"cuisine": ["Indian"]}],
-        description="Tags to include grouped by category.",
+        description=(
+            "Tags to include, grouped by category. Keys must be valid tag types "
+            "(e.g., 'cuisine', 'course') and values must be valid tags for that type."
+        ),
     )
-    excluded_tags: dict[str, list[str]] = Field(
-        default_factory=dict,
+    excluded_tags: TagFilters = Field(
         examples=[{"course": ["Dessert"]}],
-        description="Tags to exclude grouped by category.",
-    )
-    min_ing_matches: int = Field(
-        default=0,
-        examples=[2],
-        description="Minimum number of ingredient matches required.",
+        description=(
+            "Tags to exclude, grouped by category. Keys must be valid tag types "
+            "and values must be valid tags for that type."
+        )
     )
     tag_filter_mode: TagFilterMode = Field(
         default=TagFilterMode.AND,
-        description="Mode for combining include tag filters.",
+        description=(
+            "'and'  → recipe must match **every** category present in *tag_filters* "
+            "(intersection across tag_types).\n"
+            "'or'   → recipe may match **any one** category (union)."
+        ),
     )
-    max_steps: int = Field(
-        default=0,
-        examples=[10],
-        description="Maximum allowed instruction steps (0 for no limit).",
+
+    # ─── Numeric thresholds ──────────────────────────────────
+    min_ing_matches: int | None = Field(
+        default=None,
+        description=(
+            "If set, recipe must share **at least this many** ingredients with "
+            "*user_ingredients*."
+        ),
     )
-    user_coverage_req: float = Field(
-        default=0.0,
-        examples=[0.5],
-        description="Required fraction of user ingredients present in recipe.",
+    max_steps: int | None = Field(
+        default=None,
+        description="Upper bound on number of instruction steps (None → unlimited).",
     )
-    recipe_coverage_req: float = Field(
-        default=0.0,
-        examples=[0.5],
-        description="Required fraction of recipe ingredients present in user list.",
-    )
+
+    # ─── Keyword filters ─────────────────────────────────────
     keywords_to_include: list[str] = Field(
         default_factory=list,
         examples=[["quick"]],
@@ -96,9 +300,25 @@ class QueryRequest(BaseModel):
     keywords_to_exclude: list[str] = Field(
         default_factory=list,
         examples=[["slow"]],
-        description="Keywords that must not appear in the recipe.",
+        description=(
+            "If ANY of these words/phrases appears anywhere, the recipe is rejected."
+        ),
     )
-
+    equipment_to_include: list[str] = Field(
+        default_factory=list,
+        examples=[["oven", "blender"]],
+        description=(
+            "Specific equipment items or types that the recipe should ideally use. "
+            "The search is case-insensitive and matches parts of equipment descriptions."
+        ),
+    )
+    equipment_to_exclude: list[str] = Field(
+        default_factory=list,
+        examples=[["microwave"]],
+        description=(
+            "Specific equipment items or types that must NOT be mentioned in the recipe's equipment list."
+        ),
+    )
 
 class SimpleSearchRequest(BaseModel):
     """Request body for simple text-based recipe searches."""

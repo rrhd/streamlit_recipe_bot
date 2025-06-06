@@ -1,7 +1,27 @@
-from chat_agent import search_and_rerank
+import base64
+import json
+from datetime import datetime
+
+import pytest
+import streamlit as st
+from mistralai.models import (
+    AssistantMessage,
+    UserMessage,
+    ToolMessage,
+    TextChunk,
+    ImageURLChunk,
+)
+
+from cache_manager import fetch_db_last_updated
+from chat_agent import SEARCH_TOOL, search_and_rerank
 from config import CONFIG
+from constants import ModelName, FormatStrings
+from db_utils import fetch_sources_cached
+from mistral_utils import chat_complete
+from models import RecipeSearchArgs
 from session_state import SessionStateKeys
-from ui_pages.chatbot import render_chatbot_page
+from ui_helpers import UiText
+from ui_pages.chatbot import render_chatbot_page, _prep_history
 
 
 class _FakeChat:
@@ -76,3 +96,69 @@ def test_chatbot_page_real(monkeypatch):
     render_chatbot_page(fake, CONFIG)
 
     assert any(role == "assistant" for role, _ in fake.messages)
+
+@pytest.mark.parametrize(
+    "user_input",
+    [
+        "I pretty much have an empty fridge all the time, except for gatorade and eggs, microplastics as well. I have some watermelon, I can get new ingredients though, I want something savory and hearty, not soup, using typical ingredients, basic and minimal equipment. Make sure to do a query",
+    ]
+)
+def test_chatbot_page_real_with_files(user_input):
+    db_update_time = fetch_db_last_updated()
+    cache_key_time = (
+        db_update_time.strftime(FormatStrings.TIMESTAMP_CACHE_KEY)
+        if isinstance(db_update_time, datetime)
+        else str(db_update_time)
+    )
+    new_sources = fetch_sources_cached(cache_key_time)
+    config = CONFIG
+    content_chunks = []
+    chat_history = []
+    content_chunks.append(TextChunk(text=user_input))
+    chat_history.append(UserMessage(content=content_chunks))
+    response = chat_complete(
+        config,
+        messages=_prep_history(chat_history),
+        model=ModelName.CHAT_SMALL,
+        tools=[SEARCH_TOOL],
+        tool_choice="auto",
+    )
+    msg = response.choices[0].message
+    if msg.content:
+        assistant_msg = AssistantMessage(content=msg.content)
+        st.chat_message(assistant_msg.role).markdown(assistant_msg.content)
+
+    if msg.tool_calls:
+        tool_call = msg.tool_calls[0]
+        args = RecipeSearchArgs.model_validate_json(tool_call.function.arguments)
+
+
+        results = search_and_rerank(
+            args.query,
+            config,
+            sources=new_sources
+        )
+        results_short = [
+            {"title": r.get("title"), "url": r.get("url")}
+            for r in results
+        ]
+        tool_result = json.dumps(results_short)
+        if len(results) == 0:
+            chat_history.append(
+                ToolMessage(tool_call_id=tool_call.id, content="Search failed, tell user to be more specific."
+                            , name=tool_call.function.name)
+            )
+        else:
+            chat_history.append(
+                ToolMessage(tool_call_id=tool_call.id, content=tool_result, name=tool_call.function.name)
+            )
+        follow = chat_complete(
+            config,
+            messages=_prep_history(chat_history),
+            model=ModelName.CHAT_SMALL,
+        )
+        final_msg = follow.choices[0].message
+        if final_msg.content:
+            final_assistant = AssistantMessage(content=final_msg.content)
+            chat_history.append(final_assistant)
+            st.chat_message(final_assistant.role).markdown(final_assistant.content)

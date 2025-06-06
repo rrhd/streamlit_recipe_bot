@@ -1,15 +1,6 @@
 import base64
 import json
-from typing import Any
-try:
-    import streamlit as st
-except Exception:  # pragma: no cover - fallback for tests
-    import types
-    st = types.SimpleNamespace(
-        secrets={},
-        session_state={},
-        sidebar=types.SimpleNamespace(expander=lambda *a, **k: types.SimpleNamespace(markdown=lambda *_: None)),
-    )
+import streamlit as st
 from mistralai.models import (
     AssistantMessage,
     UserMessage,
@@ -48,7 +39,13 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
     chat_history: list = st.session_state[SessionStateKeys.CHAT_HISTORY]
 
     for msg in chat_history[1:]:
-        st.chat_message(msg.role).markdown(msg.content)
+        if isinstance(msg, UserMessage):
+            st.chat_message(msg.role).markdown(
+                "\n".join(chunk.text for chunk in msg.content if isinstance(chunk, TextChunk) and chunk.text)
+            )
+        elif isinstance(msg, AssistantMessage):
+            if msg.content:
+                st.chat_message(msg.role).markdown(msg.content)
 
     if len(chat_history) == 1:
         st.chat_message("assistant").markdown(UiText.CHAT_INIT_MESSAGE)
@@ -71,6 +68,9 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
             content_chunks.append(ImageURLChunk(image_url={"url": data_uri}))
 
         chat_history.append(UserMessage(content=content_chunks))
+        st.chat_message("user").markdown(
+            "\n".join(chunk.text for chunk in content_chunks if isinstance(chunk, TextChunk) and chunk.text)
+        )
 
         try:
             response = chat_complete(
@@ -80,14 +80,15 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
                 tools=[SEARCH_TOOL],
                 tool_choice="auto",
             )
+            msg = response.choices[0].message
+            chat_history.append(msg)
         except Exception as e:
             st.error(f"Chat API error: {e}")
             return
 
-        msg = response.choices[0].message
+
         if msg.content:
             assistant_msg = AssistantMessage(content=msg.content)
-            chat_history.append(assistant_msg)
             st.chat_message(assistant_msg.role).markdown(assistant_msg.content)
 
         if msg.tool_calls:
@@ -112,11 +113,19 @@ def render_chatbot_page(st: st, config: AppConfig) -> None:
             ]
             with st.sidebar.expander(UiText.EXPANDER_SEARCH_RESULTS, expanded=True):
                 for i, item in enumerate(results_short, 1):
-                    st.markdown(f"{i}. [{item['title']}]({item['url']})")
+                    if "::" in item['url']:
+                        item['url'] = item['url'].split("::")[0]
+                    st.markdown(f"{i}. {item['title']}\n\n{item['url']}")
             tool_result = json.dumps(results_short)
-            chat_history.append(
-                ToolMessage(tool_call_id=tool_call.id, content=tool_result)
-            )
+            if len(results) == 0:
+                chat_history.append(
+                    ToolMessage(tool_call_id=tool_call.id, content="Search failed, tell user to be more specific."
+                                , name=tool_call.function.name)
+                )
+            else:
+                chat_history.append(
+                    ToolMessage(tool_call_id=tool_call.id, content=tool_result, name=tool_call.function.name)
+                )
             try:
                 follow = chat_complete(
                     config,

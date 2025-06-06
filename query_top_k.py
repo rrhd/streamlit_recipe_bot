@@ -39,6 +39,7 @@ def get_db_connection(db_path: str | None = None) -> sqlite3.Connection:
         if text is not None and re.search(pattern, text, re.IGNORECASE)
         else 0,
     )
+    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -109,6 +110,8 @@ def build_candidate_urls(
     keywords_to_exclude: list[str] = None,
     sources: list[str] = None,
     limit: int = 3000,
+    equipment_to_include: list[str] = None,
+    equipment_to_exclude: list[str] = None,
 ) -> list[tuple[str, int]]:
     """
     Returns a list of (url, matched_count) for recipes that:
@@ -130,6 +133,22 @@ def build_candidate_urls(
         forbidden_ingredients = []
     if not must_use:
         must_use = []
+    if not equipment_to_include:
+        equipment_to_include = []
+    if not equipment_to_exclude:
+        equipment_to_exclude = []
+    if not min_ing_matches:
+        min_ing_matches = 0
+    if not tag_filters:
+        tag_filters = {}
+    if not excluded_tags:
+        excluded_tags = {}
+    if not tag_filter_mode:
+        tag_filter_mode = "AND"
+    if not sources:
+        sources = []
+    if not max_steps:
+        max_steps = 0
 
     needed_categories = []
     tag_or_clauses = []
@@ -156,9 +175,9 @@ def build_candidate_urls(
         COUNT(DISTINCT t.category) AS matched_categories,
         COALESCE(st.step_count, 0) AS step_count
     FROM recipe_schema s
-    JOIN recipe_tags t
+    LEFT JOIN recipe_tags t
       ON s.url = t.url
-    JOIN recipe_ingredients i
+    LEFT JOIN recipe_ingredients i
       ON s.url = i.url
     LEFT JOIN (
       SELECT url, COUNT(*) AS step_count
@@ -208,13 +227,12 @@ def build_candidate_urls(
     if forbidden_ingredients:
         forb_conditions = []
         for _ in forbidden_ingredients:
-            forb_conditions.append(
-                "fi.normalized_ingredient LIKE '%' || ? || '%' COLLATE NOCASE"
-            )
+            forb_conditions.append("REGEXP(?, fi.normalized_ingredient)")
+
         forb_clause = (
             "NOT EXISTS ("
             " SELECT 1 FROM recipe_ingredients fi"
-            " WHERE fi.url=s.url AND (" + " OR ".join(forb_conditions) + ")"
+            " WHERE fi.url = s.url AND (" + " OR ".join(forb_conditions) + ")"
             ")"
         )
         where_parts.append(f"({forb_clause})")
@@ -226,15 +244,37 @@ def build_candidate_urls(
                 "EXISTS ("
                 " SELECT 1 FROM recipe_ingredients mu"
                 " WHERE mu.url = s.url"
-                "   AND mu.normalized_ingredient LIKE '%' || ? || '%' COLLATE NOCASE"
+                "   AND REGEXP(?, mu.normalized_ingredient)" 
                 ")"
             )
             where_parts.append(must_clause)
             final_params.append(must)
 
+    # --- Equipment to Include ---
+    if equipment_to_include:
+        incl_equip_clauses = []
+        for eq_item in equipment_to_include:
+            incl_equip_clauses.append("REGEXP(?, s.equipment)")
+            final_params.append(eq_item) # Pattern for REGEXP
+        if incl_equip_clauses:
+             # Recipe should have at least one of the specified equipment
+            where_parts.append(f"({ ' OR '.join(incl_equip_clauses) })")
+
+    # --- Equipment to Exclude ---
+    if equipment_to_exclude:
+        excl_equip_clauses = []
+        for eq_item in equipment_to_exclude:
+            excl_equip_clauses.append("NOT REGEXP(?, s.equipment)")
+            final_params.append(eq_item) # Pattern for REGEXP
+        if excl_equip_clauses:
+            # Recipe should not have any of the specified equipment
+            # Also handles s.equipment IS NULL correctly (REGEXP returns 0, so NOT REGEXP is 1)
+            where_parts.append(f"({ ' AND '.join(excl_equip_clauses) })")
+
+    # --- Keywords to Include ---
     if keywords_to_include:
         for kw in keywords_to_include:
-            pattern = rf"\b{re.escape(kw)}\b"
+            pattern = kw
             incl_clause = (
                 "("
                 " REGEXP(?, s.title)"
@@ -247,13 +287,11 @@ def build_candidate_urls(
                 ")"
             )
             where_parts.append(incl_clause)
-            final_params.append(pattern)
-            final_params.append(pattern)
-            final_params.append(pattern)
+            final_params.extend([pattern, pattern, pattern])
 
     if keywords_to_exclude:
         for kw in keywords_to_exclude:
-            pattern = rf"\b{re.escape(kw)}\b"
+            pattern = kw
             excl_clause = (
                 "NOT ("
                 " REGEXP(?, s.title)"
@@ -266,9 +304,7 @@ def build_candidate_urls(
                 ")"
             )
             where_parts.append(excl_clause)
-            final_params.append(pattern)
-            final_params.append(pattern)
-            final_params.append(pattern)
+            final_params.extend([pattern, pattern, pattern])
 
     if where_parts:
         sql += " WHERE " + " AND ".join(where_parts)
@@ -276,17 +312,18 @@ def build_candidate_urls(
     sql += " GROUP BY s.url\n"
 
     having_clauses = []
-    if needed_tags_count > 0:
+
+    if tag_filters and needed_tags_count > 0 :
         if tag_filter_mode == "AND":
             having_clauses.append(f"matched_categories = {needed_tags_count}")
         else:
             having_clauses.append("matched_categories >= 1")
 
-    if min_ing_matches > 0:
+    if user_ingredients and min_ing_matches > 0:
         having_clauses.append(f"matched_count >= {min_ing_matches}")
 
     if max_steps > 0:
-        having_clauses.append(f"step_count <= {max_steps}")
+        having_clauses.append(f"COALESCE(st.step_count, 0) <= {max_steps}")
 
     if having_clauses:
         sql += " HAVING " + " AND ".join(having_clauses)
@@ -296,14 +333,14 @@ def build_candidate_urls(
     if limit > 0:
         sql += f" LIMIT {limit}"
 
-    logging.info(f"Final SQL:\n{sql}")
+    logging.info(f"Final SQL for build_candidate_urls:\n{sql}")
     logging.info(f"Params: {final_params}")
 
     conn = get_db_connection()
-    rows = conn.execute(sql, final_params).fetchall()
+    fetched_rows = conn.execute(sql, tuple(final_params)).fetchall()
     conn.close()
 
-    return [(r[0], r[1]) for r in rows]
+    return [(r["url"], r["matched_count"]) for r in fetched_rows]
 
 
 def load_bulk_recipes(candidate_urls: list[str]) -> dict[str, dict]:
@@ -569,6 +606,8 @@ def query_top_k(
     sources: list[str] | None = None,
     top_n_db: int = 3000,
     skip_hungarian_threshold: float = 0.2,
+    equipment_to_include: list[str] | None = None,
+    equipment_to_exclude: list[str] | None = None,
 ):
     """
     1) Fetch up to 'top_n_db' candidate recipes.
@@ -586,6 +625,8 @@ def query_top_k(
         keywords_to_include = []
     if keywords_to_exclude is None:
         keywords_to_exclude = []
+    equipment_to_include = equipment_to_include if equipment_to_include is not None else []
+    equipment_to_exclude = equipment_to_exclude if equipment_to_exclude is not None else []
 
     norm_user_ingredients = [
         normalize_ingredient_name(get_canonical_ingredient(u)) for u in user_ingredients
@@ -609,6 +650,8 @@ def query_top_k(
         max_steps=max_steps,
         keywords_to_include=keywords_to_include,
         keywords_to_exclude=keywords_to_exclude,
+        equipment_to_include=equipment_to_include,
+        equipment_to_exclude=equipment_to_exclude,
         sources=sources,
         limit=top_n_db,
     )
@@ -616,12 +659,14 @@ def query_top_k(
     if not candidates:
         return []
     candidate_urls = [c[0] for c in candidates]
-    recipes_dict = load_bulk_recipes(candidate_urls)
+    recipes_dict_for_dedup = load_bulk_recipes(candidate_urls)
     deduped_candidates = deduplicate_candidates(
-        candidates, recipes_dict, threshold=NumericDefault.DEDUP_THRESHOLD
+        candidates, recipes_dict_for_dedup, threshold=NumericDefault.DEDUP_THRESHOLD
     )
-    if not deduped_candidates:
-        candidates = build_candidate_urls(
+    if not deduped_candidates and candidates:
+        logging.info("Deduplication resulted in empty set, attempting re-fetch with larger limit or adjusted strategy.")
+        expanded_limit = top_n_db * 2 if top_n_db > 0 else 6000
+        candidates_expanded = build_candidate_urls(
             tag_filters=tag_filters,
             excluded_tags=excluded_tags,
             user_ingredients=norm_user_ingredients,
@@ -632,24 +677,32 @@ def query_top_k(
             max_steps=max_steps,
             keywords_to_include=keywords_to_include,
             keywords_to_exclude=keywords_to_exclude,
+            equipment_to_include=equipment_to_include,
+            equipment_to_exclude=equipment_to_exclude,
             sources=sources,
-            limit=top_n_db * 2,
+            limit=expanded_limit,
         )
-        candidate_urls = [c[0] for c in candidates]
-        recipes_dict = load_bulk_recipes(candidate_urls)
+        if not candidates_expanded:
+            return []
+        candidate_urls_expanded = [c[0] for c in candidates_expanded]
+        recipes_dict_expanded = load_bulk_recipes(candidate_urls_expanded)
         deduped_candidates = deduplicate_candidates(
-            candidates,
-            recipes_dict,
+            candidates_expanded,
+            recipes_dict_expanded,
             threshold=NumericDefault.DEDUP_THRESHOLD,
         )
-    candidate_urls = [c[0] for c in deduped_candidates]
-    recipes_dict = load_bulk_recipes(candidate_urls)
+        if not deduped_candidates: # Still no candidates after expansion and dedup
+             return []
+
+    # Final set of URLs and recipe data for coverage computation
+    final_candidate_urls = [c[0] for c in deduped_candidates] # Or c['url']
+    recipes_dict = load_bulk_recipes(final_candidate_urls) # Load details for only the deduped candidates
 
     cov_results = bulk_compute_coverage(
-        recipes_dict=recipes_dict,
-        user_ingredients=user_ingredients,
-        min_pair_sim=0.9,
-        alpha=0.75,
+        recipes_dict=recipes_dict, # Use the accurately loaded recipes_dict
+        user_ingredients=user_ingredients, # Original user ingredients for coverage
+        min_pair_sim=0.9, # Example value
+        alpha=0.75,       # Example value
         skip_hungarian_threshold=skip_hungarian_threshold,
     )
 
@@ -666,18 +719,24 @@ def query_top_k(
     )
 
     final_results = []
-    for row in df_sorted.itertuples(index=False):
-        url, title, uc, rc = row
+    for row_data in df_sorted.itertuples(index=False):
+        url, title, uc, rc = row_data.url, row_data.title, row_data.user_coverage, row_data.recipe_coverage
+        # Find the original matched_count for this URL from deduped_candidates
+        # Ensure deduped_candidates stores (url, matched_count) tuples
+        matched_count_for_url = 0
+        for cand_url, m_count in deduped_candidates:
+            if cand_url == url:
+                matched_count_for_url = m_count
+                break
+
         final_results.append(
             {
                 "url": url,
                 "title": title,
                 "user_coverage": uc,
                 "recipe_coverage": rc,
-                "matched_count": next(
-                    (mcount for (u, mcount) in deduped_candidates if u == url), 0
-                ),
-                "recipe": recipes_dict.get(url, {}),
+                "matched_count": matched_count_for_url,
+                "recipe": recipes_dict.get(url, {}), # Get full recipe data
             }
         )
     return final_results

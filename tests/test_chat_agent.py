@@ -73,3 +73,4 @@ def test_search_and_rerank_uses_llm_order(monkeypatch):
     ordered = search_and_rerank("chicken", cfg, ["s1"])
     assert [r["title"] for r in ordered] == ["B", "C", "A"]
 
+
