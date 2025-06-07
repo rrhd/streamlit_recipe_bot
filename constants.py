@@ -523,6 +523,7 @@ class CacheLimit(IntEnum):
 
 
 class SearchLimit(IntEnum):
+    MAX_QUERY_TOKENS = 4096
     MAX_TAGS_PER_CATEGORY_IN_PROMPT = 4
     MAX_TITLE_EXAMPLES = 5
     MAX_EQUIPMENT_EXAMPLES = 7

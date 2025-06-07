@@ -15,7 +15,7 @@ from models import (
     QueryRequest,
     RecipeSearchArgs,
     RecipeRankArgs,
-    strict_model_schema, RecipeRankResponse,
+    RecipeRankResponse,
 )
 from query_top_k import query_top_k, get_db_connection
 
@@ -199,7 +199,7 @@ SEARCH_TOOL = Tool(
     function=Function(
         name=ToolCall.SEARCH_RECIPES,
         description=ToolText.SEARCH_DESC,
-        parameters=strict_model_schema(RecipeSearchArgs),
+        parameters=RecipeSearchArgs.model_json_schema()
     ),
 )
 
@@ -208,7 +208,7 @@ RANK_TOOL = Tool(
     function=Function(
         name=ToolCall.RANK_RECIPES,
         description=ToolText.RANK_DESC,
-        parameters=strict_model_schema(RecipeRankArgs),
+        parameters=RecipeRankArgs.model_json_schema()
     ),
 )
 
@@ -226,6 +226,7 @@ def _parse_query(query: str, cfg: AppConfig, sources: list[str]) -> QueryRequest
         messages=messages,
         model=ModelName.CHAT_SMALL,
         response_format=QueryRequest,
+        max_tokens= SearchLimit.MAX_QUERY_TOKENS,
     )
     args: QueryRequest = resp.choices[0].message.parsed
     return args
@@ -234,12 +235,15 @@ def _parse_query(query: str, cfg: AppConfig, sources: list[str]) -> QueryRequest
 def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list[dict[str, Any]]:
     """Parse the query, execute search, then rerank results."""
     params = _parse_query(query, config, sources)
+    # We set these to empty lists to avoid any filtering by keywords, as that is too aggressive
+    params.keywords_to_include = []
+    params.keywords_to_exclude = []
     results = query_top_k(**params.model_dump(), sources=sources)
 
     if not results:
         return []
-
-    titles = [query] + [r.get("title", "") for r in results]
+    # JSON dump each result to ensure we have a consistent format
+    titles = [query] + [f"{r.get('title', '')} {r.get('description', '')}" for r in results]
     try:
         resp = embeddings_create(config, inputs=titles, model=ModelName.EMBED_BASE)
     except Exception as e:
@@ -252,9 +256,9 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
     denom = np.linalg.norm(recipe_vecs, axis=1) * np.linalg.norm(query_vec)
     sims = recipe_vecs @ query_vec / (denom + 1e-10)
     ranked = [r for _, r in sorted(zip(sims, results), key=lambda p: p[0], reverse=True)]
-
+    # JSON dump each result to ensure we have all the information we need
     items = "\n".join(
-        f"{i + 1}. {r.get('url', '')}" for i, r in enumerate(ranked[:SearchLimit.RESULTS])
+        f"{i + 1}. {json.dumps(r, ensure_ascii=False, indent=2)}" for i, r in enumerate(ranked[:SearchLimit.RESULTS])
     )
     messages = [
         SystemMessage(content=AgentText.RERANK_SYSTEM),
@@ -267,7 +271,7 @@ def search_and_rerank(query: str, config: AppConfig, sources: list[str]) -> list
             model=ModelName.CHAT_SMALL,
             response_format=RecipeRankResponse,
         )
-        order_idx = resp_rank.choices[0].message.parsed.order
+        order_idx = resp_rank.choices[0].message.parsed.new_order
         ranked = [
                      ranked[i - 1]
                      for i in order_idx

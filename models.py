@@ -1,36 +1,12 @@
 """Models for request payloads."""
 
 from enum import StrEnum
-from typing import Any, Self
+from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 from pydantic import RootModel
 
 from constants import TagFilterMode
-
-
-def rec_strict_json_schema(schema_node: Any) -> Any:
-    """Recursively enforce ``additionalProperties=False`` on a JSON schema."""
-
-    if isinstance(schema_node, (str, bool)) or schema_node is None:
-        return schema_node
-    if isinstance(schema_node, dict):
-        if schema_node.get("type") == "object":
-            schema_node["additionalProperties"] = False
-        for key, value in schema_node.items():
-            schema_node[key] = rec_strict_json_schema(value)
-    elif isinstance(schema_node, list):
-        for idx, value in enumerate(schema_node):
-            schema_node[idx] = rec_strict_json_schema(value)
-    else:
-        raise ValueError(f"Unexpected type: {schema_node}")
-    return schema_node
-
-
-def strict_model_schema(model: type[BaseModel]) -> dict:
-    """Return a strict JSON schema for ``model``."""
-
-    return rec_strict_json_schema(model.model_json_schema())
 
 
 class RecipeRankResponse(BaseModel):
@@ -189,46 +165,13 @@ TAG_ENUM_TEXT: dict[str, str] = {
     for key, enum_cls in TAG_ENUMS.items()
 }
 
-# ─────────────────────── TAG FILTER MODEL ─────────────────────
-class TagFilters(RootModel[dict[str, list[str]]]):
-    """
-    Mapping **{tag_type: [categories]}**.
-
-    • *tag_type* must be one of:
-      "course", "main_ingredient", "dish_type", "recipe_type", "cuisine", "holiday".
-
-    • *categories* must be strings drawn from the **allowed values** for that type
-      (listed verbosely below).
-
-    Allowed categories                         (flat string list per tag_type)
-    ───────────────────────────────────────────────────────────────────────────
-    course          → {TAG_ENUM_TEXT['course']}
-    main_ingredient → {TAG_ENUM_TEXT['main_ingredient']}
-    dish_type       → {TAG_ENUM_TEXT['dish_type']}
-    recipe_type     → {TAG_ENUM_TEXT['recipe_type']}
-    cuisine         → {TAG_ENUM_TEXT['cuisine']}
-    holiday         → {TAG_ENUM_TEXT['holiday']}
-    """
-
-    @model_validator(mode="after")
-    def _validate(self) -> Self:
-
-        if not isinstance(self.root, dict):
-
-            raise ValueError("TagFilters root must be a dictionary.")
-        for tag_type, cats in self.root.items():
-            if tag_type not in TAG_ENUMS:
-                raise ValueError(f"Unsupported tag_type {tag_type!r}")
-            if not isinstance(cats, list):
-                raise ValueError(f"Categories for tag_type {tag_type!r} must be a list.")
-            enum_cls = TAG_ENUMS[tag_type]
-            bad = [c for c in cats if not isinstance(c, str) or c not in enum_cls._value2member_map_]
-            if bad:
-                raise ValueError(
-                    f"{tag_type}: invalid categories {bad!r}. "
-                    f"Allowed: {', '.join(e for e in enum_cls)}"
-                )
-        return self
+class TagFilters(BaseModel):
+    course: list[CourseEnum] = Field(default_factory=list)
+    main_ingredient: list[MainIngredientEnum] = Field(default_factory=list)
+    dish_type: list[DishTypeEnum] = Field(default_factory=list)
+    recipe_type: list[RecipeTypeEnum] = Field(default_factory=list)
+    cuisine: list[CuisineEnum] = Field(default_factory=list)
+    holiday: list[HolidayEnum] = Field(default_factory=list)
 
 
 class QueryRequest(BaseModel):
@@ -256,6 +199,7 @@ class QueryRequest(BaseModel):
         description="Recipes containing ANY of these ingredients are rejected outright.",
     )
     tag_filters: TagFilters = Field(
+        default_factory=TagFilters,
         examples=[{"cuisine": ["Indian"]}],
         description=(
             "Tags to include, grouped by category. Keys must be valid tag types "
@@ -263,6 +207,7 @@ class QueryRequest(BaseModel):
         ),
     )
     excluded_tags: TagFilters = Field(
+        default_factory=TagFilters,
         examples=[{"course": ["Dessert"]}],
         description=(
             "Tags to exclude, grouped by category. Keys must be valid tag types "
@@ -270,15 +215,13 @@ class QueryRequest(BaseModel):
         )
     )
     tag_filter_mode: TagFilterMode = Field(
-        default=TagFilterMode.AND,
+        default=TagFilterMode.OR,
         description=(
             "'and'  → recipe must match **every** category present in *tag_filters* "
             "(intersection across tag_types).\n"
             "'or'   → recipe may match **any one** category (union)."
         ),
     )
-
-    # ─── Numeric thresholds ──────────────────────────────────
     min_ing_matches: int | None = Field(
         default=None,
         description=(
@@ -290,8 +233,6 @@ class QueryRequest(BaseModel):
         default=None,
         description="Upper bound on number of instruction steps (None → unlimited).",
     )
-
-    # ─── Keyword filters ─────────────────────────────────────
     keywords_to_include: list[str] = Field(
         default_factory=list,
         examples=[["quick"]],

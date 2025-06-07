@@ -1,26 +1,25 @@
-import base64
+import json
+from datetime import datetime
+
 import json
 from datetime import datetime
 
 import pytest
-import streamlit as st
 from mistralai.models import (
     AssistantMessage,
     UserMessage,
     ToolMessage,
     TextChunk,
-    ImageURLChunk,
 )
 
 from cache_manager import fetch_db_last_updated
-from chat_agent import SEARCH_TOOL, search_and_rerank
+from chat_agent import SEARCH_TOOL, search_and_rerank, _parse_query
 from config import CONFIG
 from constants import ModelName, FormatStrings
 from db_utils import fetch_sources_cached
 from mistral_utils import chat_complete
 from models import RecipeSearchArgs
 from session_state import SessionStateKeys
-from ui_helpers import UiText
 from ui_pages.chatbot import render_chatbot_page, _prep_history
 
 
@@ -98,6 +97,18 @@ def test_chatbot_page_real(monkeypatch):
     assert any(role == "assistant" for role, _ in fake.messages)
 
 @pytest.mark.parametrize(
+    "query",
+    [
+        'savory hearty recipes with eggs and watermelon'
+    ]
+)
+def test_parse_query(query):
+    config = CONFIG
+    sources = ["dummy_source"]
+    params = _parse_query(query, config, sources)
+
+
+@pytest.mark.parametrize(
     "user_input",
     [
         "I pretty much have an empty fridge all the time, except for gatorade and eggs, microplastics as well. I have some watermelon, I can get new ingredients though, I want something savory and hearty, not soup, using typical ingredients, basic and minimal equipment. Make sure to do a query",
@@ -124,10 +135,6 @@ def test_chatbot_page_real_with_files(user_input):
         tool_choice="auto",
     )
     msg = response.choices[0].message
-    if msg.content:
-        assistant_msg = AssistantMessage(content=msg.content)
-        st.chat_message(assistant_msg.role).markdown(assistant_msg.content)
-
     if msg.tool_calls:
         tool_call = msg.tool_calls[0]
         args = RecipeSearchArgs.model_validate_json(tool_call.function.arguments)
@@ -161,4 +168,3 @@ def test_chatbot_page_real_with_files(user_input):
         if final_msg.content:
             final_assistant = AssistantMessage(content=final_msg.content)
             chat_history.append(final_assistant)
-            st.chat_message(final_assistant.role).markdown(final_assistant.content)
